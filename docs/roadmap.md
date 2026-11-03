@@ -1,6 +1,6 @@
 # Mycelium roadmap
 
-**Status:** plan, updated 2026-11-04. Written with Claude Code from Tristan's notes of 31 Oct, 4 Nov (business-wide product) and 4 Nov (enterprise wedge); needs human review. v1 (steps 1 to 9 of the original build, see [architecture.md](architecture.md)) is done and running on the homelab. This file covers everything after it.
+**Status:** plan, updated 2026-11-04. Written from Tristan's notes of 31 Oct, 4 Nov (business-wide product) and 4 Nov (enterprise wedge); Reviewed. v1 (steps 1 to 9 of the original build, see [architecture.md](architecture.md)) is done and running on the homelab. This file covers everything after it.
 
 ## Direction (2026-11-04)
 
