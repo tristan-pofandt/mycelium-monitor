@@ -113,3 +113,37 @@ def ingest_events():
         return jsonify(accepted=accepted, rejected=rejected), 202
     finally:
         conn.close()
+
+
+STATIC_EDGES = {"import", "tests", "route", "calls", "uses", "config", "contains", "serves", "runs"}
+NODE_KINDS = {"file", "folder", "endpoint", "store", "external", "config", "actor"}
+MAX_GRAPH = 20000
+
+
+@bp.post("/ingest/graph")
+def ingest_graph():
+    """The static map of an app (emitters/python/mycelium_scan.py): names and relations only. Replaces the app's previous static links."""
+    key = request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
+    conn = db.connect()
+    try:
+        app = db.app_for_key(conn, key) if key else None
+        if not app:
+            return jsonify(error="Unauthorized."), 401
+        body = request.get_json(silent=True)
+        nodes, edges = (body.get("nodes"), body.get("edges")) if isinstance(body, dict) else (None, None)
+        if not isinstance(nodes, list) or not isinstance(edges, list) or len(nodes) + len(edges) > MAX_GRAPH:
+            return jsonify(error="Send {nodes, edges} lists."), 400
+        now = time.time()
+        ok_nodes = [(app, n["id"][:300], n["id"].split(":", 1)[0]) for n in nodes
+                    if isinstance(n, dict) and isinstance(n.get("id"), str) and n["id"].split(":", 1)[0] in NODE_KINDS]
+        ok_edges = [(app, e["src"][:300], e["dst"][:300], e["kind"]) for e in edges
+                    if isinstance(e, dict) and isinstance(e.get("src"), str) and isinstance(e.get("dst"), str)
+                    and e.get("kind") in STATIC_EDGES and e["src"].split(":", 1)[0] in NODE_KINDS and e["dst"].split(":", 1)[0] in NODE_KINDS]
+        with conn:
+            conn.execute(f"DELETE FROM edges WHERE app=? AND kind IN ({','.join('?' * len(STATIC_EDGES))})", [app, *STATIC_EDGES])
+            conn.executemany("INSERT OR IGNORE INTO nodes (app,id,kind,first_seen,last_seen,hits) VALUES (?,?,?,?,?,0)",
+                             [(a, i, k, now, now) for a, i, k in ok_nodes])
+            conn.executemany("INSERT OR IGNORE INTO edges (app,src,dst,kind,hits,last_seen) VALUES (?,?,?,?,0,NULL)", ok_edges)
+        return jsonify(nodes=len(ok_nodes), edges=len(ok_edges)), 202
+    finally:
+        conn.close()

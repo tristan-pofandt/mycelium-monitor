@@ -50,7 +50,7 @@ function RequestsCard({ app }) {
   }
   const total = rows.reduce((s, b) => s + b.count, 0);
   return (
-    <section className="panel-card chart-card ov-chart" aria-labelledby="req-h">
+    <section className="panel-card chart-card span-2 ov-chart" aria-labelledby="req-h">
       <div className="card-head">
         <div>
           <h2 id="req-h">Requests</h2>
@@ -106,7 +106,7 @@ export default function Overview({ app, apps }) {
   const p = s?.previous;
   const note = insight(s);
   return (
-    <div className="overview">
+    <>
       <div className="greeting">
         <h1><span className="rise-mask"><span className="rise">{greeting()}</span></span></h1>
         <p className={`state-line state-${shown.some((a) => a.status === "down") ? "bad" : "ok"}`}>
@@ -116,7 +116,6 @@ export default function Overview({ app, apps }) {
       </div>
       {error && !s && <p className="notice" role="status">Couldn't load the summary.</p>}
 
-      <div className="ov-main">
         <dl className="kpis ov-kpis" aria-label="Last 24 hours">
           <KpiTile icon="requests" label="Requests in the last 24 hours" value={<CountUp value={s?.requests} format={fmt.n} delay={ENTER_AT} />} to={`/${app}/usage`} linkLabel="Open usage"
             delta={s && <Delta now={s.requests} before={p.requests} />} />
@@ -128,16 +127,6 @@ export default function Overview({ app, apps }) {
             to={`/${app}/costs`} linkLabel="Open costs" delta={s && <Delta now={s.cost_today} before={p.cost_today} goodWhenUp={false} />} />
         </dl>
         <RequestsCard app={app} />
-        <div className="ov-pair ov-later">
-          <RecentActivity app={app} />
-          <section className="panel-card" aria-labelledby="heat-h">
-            <div className="card-head"><h2 id="heat-h">Activity this week</h2></div>
-            {week ? <Heatmap buckets={week} title="Events per hour over the last 7 days" /> : <Skeleton height={200} />}
-          </section>
-        </div>
-      </div>
-
-      <aside className="ov-side" aria-label="Health and live map">
         <section className="panel-card ov-gauge" aria-labelledby="up-h">
           <div className="card-head">
             <div><h2 id="up-h">Uptime</h2><p className="card-sub">Health checks, last 30 days</p></div>
@@ -160,13 +149,17 @@ export default function Overview({ app, apps }) {
           </div>
           <MapPreview app={app} />
         </section>
+        <RecentActivity app={app} />
+        <section className="panel-card" aria-labelledby="heat-h">
+          <div className="card-head"><h2 id="heat-h">Activity this week</h2></div>
+          {week ? <Heatmap buckets={week} title="Events per hour over the last 7 days" /> : <Skeleton height={200} />}
+        </section>
         {note && (
           <section className="insight ov-insight" aria-label="Insight">
             <span className="insight-icon" aria-hidden="true"><Icon name="spark" /></span>
             <p>{note}</p>
           </section>
         )}
-      </aside>
-    </div>
+    </>
   );
 }

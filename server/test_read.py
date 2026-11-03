@@ -33,6 +33,17 @@ class ReadApiTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def test_static_graph_is_stored_and_replaced(self):
+        g = {"nodes": [{"id": "file:a.py", "kind": "file"}, {"id": "endpoint:/x", "kind": "endpoint"}, {"id": "bad:z"}],
+             "edges": [{"src": "endpoint:/x", "dst": "file:a.py", "kind": "route"}, {"src": "file:a.py", "dst": "file:a.py", "kind": "nope"}]}
+        h = {"Authorization": f"Bearer {self.key}"}
+        self.assertEqual(self.client.post("/ingest/graph", json=g, headers=h).status_code, 202)
+        self.assertEqual(self.client.post("/ingest/graph", json=g).status_code, 401)
+        self.client.post("/ingest/graph", json=g, headers=h)  # twice: still one link
+        edges = self.get("/api/graph?app=reroute")["edges"]
+        self.assertEqual([e for e in edges if e["kind"] == "route"], [{"app": "reroute", "src": "endpoint:/x", "dst": "file:a.py", "kind": "route", "hits": 0, "last_seen": None}])
+        self.assertTrue(any(e["kind"] == "write" for e in edges))  # runtime links are kept
+
     def get(self, url):
         r = self.client.get(url)
         self.assertEqual(r.status_code, 200, url)

@@ -3,6 +3,7 @@
    from the reference dashboards Tristan chose on 2026-11-01. See DESIGN.md.
    Theme: follows the system unless html[data-theme] is set by the header toggle. */
 :root {
+  --gutter: clamp(16px, 2.4vw, 44px); /* side padding of the header and every page */
   --bg-void: #06070b;
   --bg-base: #08090d;
   --bg-surface: #111319;

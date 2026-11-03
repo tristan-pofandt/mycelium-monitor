@@ -16,8 +16,8 @@ import { Table } from "../charts.jsx";
 import { Icon } from "../icons.jsx";
 import { Skeleton, Tip, rovingKeys, useToast } from "../ui.jsx";
 
-const KINDS = { file: "File", store: "Data store", endpoint: "Endpoint", external: "External API", actor: "Actor" };
-const NODE_VAR = { file: "--text-muted", store: "--violet", endpoint: "--teal", external: "--orange", actor: "--text" };
+const KINDS = { file: "File", folder: "Folder", store: "Data store", endpoint: "Endpoint", external: "External API", config: "Config variable", actor: "Actor" };
+const NODE_VAR = { file: "--text-muted", store: "--violet", endpoint: "--teal", external: "--orange", config: "--accent-text", folder: "--text-faint", actor: "--text" };
 const EVENT_VAR = { read: "--ev-read", write: "--ev-write", external: "--ev-external", cost: "--ev-external", request: "--ev-read", error: "--ev-error" };
 const PULSE_MS = 700, RING_MS = 600, MAX_PULSES = 200, DIM = 0.12;
 const AMBIENT_MS = 60000, FLOW_MS = 2600, MAX_AMBIENT = 60; // ambient flow: how long an edge keeps flowing, one trip, how many at once
@@ -46,7 +46,15 @@ function readPalette() {
 function buildGraph(raw, app) {
   const key = (a, id) => (app === "all" ? `${a}|${id}` : id);
   const nodes = raw.nodes.map((n) => ({ id: key(n.app, n.id), raw: n.id, app: n.app, kind: n.kind, hits: n.hits, last_seen: n.last_seen }));
-  const links = raw.edges.map((e) => ({ source: key(e.app, e.src), target: key(e.app, e.dst), kind: e.kind, hits: e.hits }));
+  // The server keeps static relations (import, route, ...) and runtime ones (read, write, ...) as separate rows; one line is drawn per pair.
+  const links = [], seen = new Map();
+  for (const e of raw.edges) {
+    const source = key(e.app, e.src), target = key(e.app, e.dst), id = `${source}>${target}`, prior = seen.get(id);
+    if (!prior) { const l = { source, target, kind: e.kind, hits: e.hits, rels: [e.kind] }; seen.set(id, l); links.push(l); continue; }
+    prior.rels.push(e.kind);
+    if (e.hits > prior.hits) prior.kind = e.kind; // what actually happened wins over what the code says could
+    prior.hits += e.hits;
+  }
   return { nodes, links, key };
 }
 
@@ -161,7 +169,8 @@ export default function MapPanel({ app }) {
           const lit = s.lit || s.litLast, k = dimK();
           const touches = lit && (endId(l.source) === (s.hover || s.focus) || endId(l.target) === (s.hover || s.focus));
           if (touches && k > 0) return rgba(P().accent, 0.35 + 0.55 * k);
-          return rgba(P().link, lit ? 0.45 - 0.37 * k : 0.45);
+          const base = l.hits || l.lastAt ? 0.45 : 0.3; // links only the code implies are fainter than ones that carried traffic
+          return rgba(P().link, lit ? base - 0.37 * k * (base / 0.45) : base);
         })
         .linkWidth((l) => (s.glow.get(l)?.until > performance.now() ? 2.5 : 1))
         .linkDirectionalArrowLength(2.5).linkDirectionalArrowRelPos(1)
@@ -189,6 +198,7 @@ export default function MapPanel({ app }) {
           // Pulses: one crisp dot per event, eased along the edge (canvas shadowBlur is costly, and Node Flow's dots are plain).
           s.pulses = s.pulses.filter((p) => {
             const t = (now - p.t0) / PULSE_MS;
+            if (t < 0) return true; // a later hop of the same event, not started yet
             if (t >= 1) { s.rings.push({ node: p.link.target, color: p.color, t0: now }); return false; }
             const { source: a, target: b } = p.link;
             if (a.x == null || b.x == null) return false;
@@ -253,15 +263,16 @@ export default function MapPanel({ app }) {
     if (!link) { link = { source: src, target: dst, kind: e.kind, hits: 0 }; links.push(link); added = true; }
     if (added) { g.graphData({ nodes, links }); G.nodes = nodes; G.links = links; s.adj = adjacency(links); } // d3 resolves link ends in place
     const color = s.pal.event[kind] || s.pal.muted;
-    link.lastAt = performance.now(); link.lastColor = color; link.seed ??= Math.random(); // feeds the ambient flow
-    s.recent.add(link);
-    if (reducedMotion()) {
-      s.glow.set(link, { until: performance.now() + 1200, color });
-      kick(1300);
-    } else if (s.pulses.length < MAX_PULSES) {
-      s.pulses.push({ link, color, t0: performance.now() });
-      g.autoPauseRedraw(false);
+    // A request also travels on to the code that handles it (endpoint -> file), so the pulse shows the whole path.
+    const path = e.kind === "request" ? [link, ...links.filter((l) => l.kind === "route" && endId(l.source) === dst)] : [link];
+    for (const l of path) {
+      l.lastAt = performance.now(); l.lastColor = color; l.seed ??= Math.random(); // feeds the ambient flow
+      s.recent.add(l);
+      if (reducedMotion()) s.glow.set(l, { until: performance.now() + 1200, color });
+      else if (s.pulses.length < MAX_PULSES) s.pulses.push({ link: l, color, t0: performance.now() + (l === link ? 0 : PULSE_MS * 0.6) });
     }
+    if (reducedMotion()) kick(1300);
+    else g.autoPauseRedraw(false);
   });
 
   useEffect(() => {

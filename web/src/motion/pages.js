@@ -44,6 +44,11 @@ export function movePill(pill, from, to) {
 const ENTER = { delay: 150, title: 700, block: 650, step: 65, rise: 24, cap: 12 };
 const BLOCKS = ".greeting .state-line, .kpi, .panel-card, .card, .insight, .stat, .toolbar";
 
+// Titles rise once on mount. Blocks (cards, tiles, insight, toolbar) reveal as they appear: those present on mount, those that
+// arrive later when data loads (an insight, a card replacing its skeleton), and those below the fold once scrolled into view.
+// Each is hidden the moment it is added, then revealed in DOM order, 65 ms apart. Used only through <Page> so every page behaves alike.
+const top = (el) => !el.parentElement?.closest(BLOCKS); // a block inside another block rides along with its parent
+
 export function pageEnter(root) {
   if (!root) return null;
   const s = slow();
@@ -51,15 +56,36 @@ export function pageEnter(root) {
     duration: ENTER.title * s, delay: ENTER.delay * s, step: 90 * s, easing: CSS_EASE, props: ["translate"],
     done: (el) => el.style.removeProperty("translate"),
   });
-  const blocks = fx(root.querySelectorAll(BLOCKS), [
-    { translate: `0 ${ENTER.rise}px`, opacity: 0, filter: "blur(8px)" },
-    { translate: "0 0", opacity: 1, filter: "blur(0px)" },
-  ], {
-    duration: ENTER.block * s, delay: (ENTER.delay + 120) * s, step: ENTER.step * s, cap: ENTER.cap, easing: CSS_EASE,
-    props: ["translate", "opacity", "filter"],
-    done: (el) => ["translate", "opacity", "filter"].forEach((p) => el.style.removeProperty(p)),
+  if (reducedMotion() || typeof IntersectionObserver === "undefined") return { stop() { titles.stop(); } };
+  const props = ["translate", "opacity", "filter"], running = new Set(), seen = new WeakSet(), queue = [];
+  let first = true;
+  const reveal = (entries) => {
+    entries.forEach((e) => { if (e.isIntersecting) { io.unobserve(e.target); queue.push(e.target); } });
+    const batch = queue.splice(0).filter((el) => el.isConnected).sort((a, b) => (a.compareDocumentPosition(b) & 4 ? -1 : 1));
+    if (!batch.length) return;
+    batch.forEach((el) => el.style.removeProperty("opacity")); // the animation holds it at 0 until its turn
+    const run = fx(batch, [
+      { translate: `0 ${ENTER.rise}px`, opacity: 0, filter: "blur(8px)" },
+      { translate: "0 0", opacity: 1, filter: "blur(0px)" },
+    ], {
+      duration: ENTER.block * s, delay: (first ? ENTER.delay + 120 : 0) * s, step: ENTER.step * s, cap: ENTER.cap, easing: CSS_EASE, props,
+      done: (el) => props.forEach((p) => el.style.removeProperty(p)),
+    });
+    first = false;
+    running.add(run);
+    run.finished.then(() => running.delete(run));
+  };
+  const io = new IntersectionObserver(reveal);
+  const scan = () => root.querySelectorAll(BLOCKS).forEach((el) => {
+    if (seen.has(el) || !top(el)) return;
+    seen.add(el);
+    el.style.opacity = "0"; // hidden before the browser paints it
+    io.observe(el);
   });
-  return { stop() { titles.stop(); blocks.stop(); } };
+  const mo = new MutationObserver(scan);
+  scan();
+  mo.observe(root, { childList: true, subtree: true });
+  return { stop() { mo.disconnect(); io.disconnect(); titles.stop(); running.forEach((r) => r.stop()); } };
 }
 
 // The leaving page blurs and fades; framer-motion runs it as the route's exit.

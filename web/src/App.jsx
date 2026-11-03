@@ -8,7 +8,8 @@ import Palette from "./Palette.jsx";
 import Login from "./Login.jsx";
 import { Icon, Logo } from "./icons.jsx";
 import { useTheme } from "./theme.js";
-import { edgesOf, movePill, pageEnter, pageExit } from "./motion/pages.js";
+import Page from "./Page.jsx";
+import { edgesOf, movePill, pageExit } from "./motion/pages.js";
 import { StatusBadge } from "./panels/Status.jsx";
 import { Picker, Tip, ToastProvider, rovingKeys } from "./ui.jsx";
 
@@ -33,13 +34,6 @@ function overall(apps, slug) {
   const shown = slug === "all" ? apps : apps.filter((a) => a.slug === slug);
   if (shown.some((a) => a.status === "down")) return "down";
   return shown.length && shown.every((a) => a.status === "up") ? "up" : null;
-}
-
-// The page's blocks resolve from blur once, when the page mounts (motion/pages.js).
-function PageEnter({ children }) {
-  const ref = useRef(null);
-  useLayoutEffect(() => { const run = pageEnter(ref.current); return () => run?.stop(); }, []);
-  return <div ref={ref}>{children}</div>;
 }
 
 // One accent pill behind the tabs that stretches to the active tab: leading edge first, trailing edge catching up.
@@ -129,14 +123,9 @@ function Shell({ apps }) {
       <main className="content" id="main" tabIndex={-1}>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div key={location.pathname} initial={false} animate={{ opacity: 1, filter: "blur(0px)" }} exit={pageExit(reduced)}>
-            <PageEnter>
-            {current.id !== "overview" && (
-              <div className="page-head">
-                <h1><span className="rise-mask"><span className="rise">{current.title}</span></span><span className="h1-scope rise-mask"><span className="rise"><span className="sr-only">, </span>{appName}</span></span></h1>
-              </div>
-            )}
-            <Panel app={app} apps={apps} appName={appName} />
-            </PageEnter>
+            <Page title={current.id === "overview" ? null : current.title} scope={appName}>
+              <Panel app={app} apps={apps} appName={appName} />
+            </Page>
           </motion.div>
         </AnimatePresence>
       </main>
