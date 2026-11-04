@@ -6,7 +6,7 @@
 set -euo pipefail
 HOST=${HOST:-root@192.168.1.106}
 CT=${CT:-101}
-tar czf /tmp/mycelium-demo.tgz --exclude=node_modules --exclude=dist web/package.json web/package-lock.json web/vite.demo.config.js web/src demo/server.py infra/demo.Dockerfile
+tar czf /tmp/mycelium-demo.tgz --exclude=node_modules --exclude=dist web/package.json web/package-lock.json web/vite.demo.config.js web/src web/public demo/server.py infra/demo.Dockerfile
 scp -q /tmp/mycelium-demo.tgz "$HOST:/tmp/mycelium-demo.tgz"
 ssh "$HOST" bash -s -- "$CT" <<'REMOTE'
 set -euo pipefail

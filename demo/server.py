@@ -7,6 +7,7 @@ Run:  python demo/server.py            (http://127.0.0.1:8200)
 Env:  DEMO_HOST, DEMO_PORT, DEMO_CODE (optional access code needed to send feedback), DEMO_FEEDBACK_DIR
 """
 import json
+import mimetypes
 import os
 import re
 import threading
@@ -17,6 +18,7 @@ from pathlib import Path
 from flask import Flask, abort, jsonify, request, send_from_directory
 
 HERE = Path(__file__).resolve().parent
+mimetypes.add_type("application/manifest+json", ".webmanifest")  # not in every platform's table
 LIMITS = {"text": 4000, "short": 200}
 RATE = (60, 600)  # at most 60 posts per visitor per 10 minutes
 MAX_FILE = 5_000_000  # stop accepting once FEEDBACK.md reaches 5 MB, so a public demo can never fill the disk

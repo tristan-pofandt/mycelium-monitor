@@ -10,6 +10,7 @@ import "../app.css";
 import "./demo.css";
 
 applySavedTheme();
+if (import.meta.env.PROD && "serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js"); // installable, as the main site
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>

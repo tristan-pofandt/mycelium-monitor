@@ -29,6 +29,10 @@ review. It runs on a fictional company, **Brolga Industries**: 4 Queensland site
   staff their own shifts; the team map is a radial tree with labels that thin out with depth.
 - **Safety cues:** destructive security actions are hold-to-confirm, decisions and actions toast with Undo, and Roles and
   permissions shows an audit trail of every change made in the demo.
+- **Installable:** like the main site, the demo installs as an app on a PC (Chrome or Edge: the install icon in the address
+  bar) or a phone (Android: Install app; iPhone: Share, then Add to Home Screen). It has its own manifest
+  (`web/src/demo/manifest.webmanifest`, "Mycelium demo") and reuses the main site's icons and app-shell service worker from
+  `web/public` (only the shell is cached; feedback and answers always go to the server).
 - **Phone:** the header keeps the logo, "Viewing as" and the theme; Your systems and Feedback move into the banner with their
   labels; Roles and Setup join the end of the tab row.
 
