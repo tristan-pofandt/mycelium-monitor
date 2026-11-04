@@ -8,13 +8,15 @@ import { Icon } from "./icons.jsx";
 import { EmptyState, Tip } from "./ui.jsx";
 import { EASE, slow } from "./choreography.js";
 import { reducedMotion } from "./reduced.js";
+import { REVEAL } from "./motion/pages.js";
 
-const COUNT_S = 1.1; // count-up length: long enough to read as a climb, short enough not to delay the number
+const COUNT_S = 0.7; // count-up length: reads as a climb, done about when its card has landed
 
 // A number that climbs to its value when the page opens, and glides from old to new when the data refreshes.
 // It writes straight to the text node (no re-render per frame); assistive technology reads only the final value.
-// `delay` (seconds) lines the first climb up with its tile's entrance; refreshes glide at once.
-export function CountUp({ value, format = String, delay = 0 }) {
+// The first climb starts when its block starts to rise (motion/pages.js fires REVEAL with that block's delay), so every page
+// counts up in the same top-left to bottom-right order as its cards; a number whose block is already in place climbs at once.
+export function CountUp({ value, format = String }) {
   const ref = useRef(null);
   const from = useRef(0);
   const first = useRef(true);
@@ -27,9 +29,18 @@ export function CountUp({ value, format = String, delay = 0 }) {
     const show = (v) => { el.textContent = format(Number(v.toFixed(places))); };
     if (reducedMotion() || start === value) { show(value); return undefined; }
     show(start); // before the first paint, so the final value never flashes first
-    const c = animate(start, value, { duration: COUNT_S * slow(), delay: (first.current ? delay : 0) * slow(), ease: EASE, onUpdate: show });
+    let c, block, onReveal;
+    const climb = (ms = 0) => { c = animate(start, value, { duration: COUNT_S * slow(), delay: ms / 1000, ease: EASE, onUpdate: show }); };
+    const wait = first.current;
     first.current = false;
-    return () => c.stop();
+    // One frame later the page has marked its blocks (a parent's layout effect runs after this one).
+    const raf = requestAnimationFrame(() => {
+      block = wait && el.closest("[data-reveal]");
+      if (block?.dataset.reveal !== "wait") { climb(); return; }
+      onReveal = (e) => climb(e.detail.delay);
+      block.addEventListener(REVEAL, onReveal, { once: true });
+    });
+    return () => { cancelAnimationFrame(raf); block?.removeEventListener(REVEAL, onReveal); c?.stop(); };
   }, [value]);
   return (
     <>
@@ -39,11 +50,23 @@ export function CountUp({ value, format = String, delay = 0 }) {
   );
 }
 
+// A tile's value as given ("96%", "6.5 h", "US$0.02", 1195), counting up when it holds one number; anything else as it is.
+const ONE_NUMBER = /^(\D*?)(\d[\d,]*(?:\.\d+)?)(\D*)$/;
+export function Countable({ value }) {
+  if (typeof value === "number") return <CountUp value={value} format={(v) => v.toLocaleString()} />;
+  const m = typeof value === "string" && value.match(ONE_NUMBER);
+  if (!m) return value;
+  const [, pre, digits, post] = m;
+  const places = (digits.split(".")[1] || "").length, commas = digits.includes(",");
+  const num = (v) => (commas ? v.toLocaleString(undefined, { minimumFractionDigits: places, maximumFractionDigits: places }) : v.toFixed(places));
+  return <CountUp value={Number(digits.replace(/,/g, ""))} format={(v) => pre + num(v) + post} />;
+}
+
 export function Stat({ label, value, note }) {
   return (
     <div className="stat">
       <dt className="stat-label">{label}</dt>
-      <dd className="stat-value">{value}</dd>
+      <dd className="stat-value"><Countable value={value} /></dd>
       {note && <dd className="stat-note">{note}</dd>}
     </div>
   );
@@ -72,7 +95,7 @@ export function KpiTile({ icon, label, value, delta, to, linkLabel }) {
         <span className="kpi-icon"><Icon name={icon} size={18} /></span>
         {to && <Tip label={linkLabel} describe={false}><Link to={to} className="round-link" aria-label={linkLabel}><Icon name="arrow" /></Link></Tip>}
       </div>
-      <dd className="kpi-value">{value}</dd>
+      <dd className="kpi-value"><Countable value={value} /></dd>
       <dt className="kpi-label">{label}</dt>
       {delta && <dd className="kpi-delta"><Tip label="Change on the previous 24 hours" describe={false}><span className="delta-wrap" tabIndex={-1}>{delta}</span></Tip></dd>}
     </div>
@@ -150,7 +173,7 @@ export function Gauge({ value, label, sub, segments = 26 }) {
         })}
       </svg>
       <div className="gauge-centre" aria-hidden="true">
-        <span className="gauge-value"><CountUp value={value} format={(v) => `${v}%`} delay={0.45} /></span>
+        <span className="gauge-value"><CountUp value={value} format={(v) => `${v}%`} /></span>
         {sub && <span className="gauge-sub">{sub}</span>}
       </div>
     </div>

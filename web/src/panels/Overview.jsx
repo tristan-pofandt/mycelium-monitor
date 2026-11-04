@@ -9,7 +9,6 @@ import { EmptyState, Skeleton, Tip, rovingKeys, useRowHighlight } from "../ui.js
 
 const greeting = () => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"; };
 const RANGES = [["24h", "24 hours"], ["7d", "7 days"], ["30d", "30 days"]];
-const ENTER_AT = 0.3, STEP = 0.065; // seconds: when the KPI tiles rise in (motion/pages.js ENTER), so each number climbs as its tile arrives
 
 function stateLine(shown) {
   if (!shown.length) return "No apps connected yet.";
@@ -117,13 +116,13 @@ export default function Overview({ app, apps }) {
       {error && !s && <p className="notice" role="status">Couldn't load the summary.</p>}
 
         <dl className="kpis ov-kpis" aria-label="Last 24 hours">
-          <KpiTile icon="requests" label="Requests in the last 24 hours" value={<CountUp value={s?.requests} format={fmt.n} delay={ENTER_AT} />} to={`/${app}/usage`} linkLabel="Open usage"
+          <KpiTile icon="requests" label="Requests in the last 24 hours" value={<CountUp value={s?.requests} format={fmt.n} />} to={`/${app}/usage`} linkLabel="Open usage"
             delta={s && <Delta now={s.requests} before={p.requests} />} />
-          <KpiTile icon="errors" label="Errors in the last 24 hours" value={<CountUp value={s?.errors} format={fmt.n} delay={ENTER_AT + STEP} />} to={`/${app}/events`} linkLabel="Open the event log"
+          <KpiTile icon="errors" label="Errors in the last 24 hours" value={<CountUp value={s?.errors} format={fmt.n} />} to={`/${app}/events`} linkLabel="Open the event log"
             delta={s && <Delta now={s.errors} before={p.errors} goodWhenUp={false} />} />
-          <KpiTile icon="latency" label="p95 response time" value={<CountUp value={s?.p95_ms} format={fmt.ms} delay={ENTER_AT + 2 * STEP} />} to={`/${app}/apis`} linkLabel="Open API details"
+          <KpiTile icon="latency" label="p95 response time" value={<CountUp value={s?.p95_ms} format={fmt.ms} />} to={`/${app}/apis`} linkLabel="Open API details"
             delta={s && <Delta now={s.p95_ms} before={p.p95_ms} goodWhenUp={false} />} />
-          <KpiTile icon="wallet" label={s ? `Cost today, ${fmt.usd(s.cost_month)} this month` : "Cost today"} value={<CountUp value={s?.cost_today} format={fmt.usd} delay={ENTER_AT + 3 * STEP} />}
+          <KpiTile icon="wallet" label={s ? `Cost today, ${fmt.usd(s.cost_month)} this month` : "Cost today"} value={<CountUp value={s?.cost_today} format={fmt.usd} />}
             to={`/${app}/costs`} linkLabel="Open costs" delta={s && <Delta now={s.cost_today} before={p.cost_today} goodWhenUp={false} />} />
         </dl>
         <RequestsCard app={app} />

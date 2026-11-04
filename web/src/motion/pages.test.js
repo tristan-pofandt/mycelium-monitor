@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { movePill } from "./pages.js";
+import { blocksOf, byPlacement, movePill } from "./pages.js";
 
 // A stand-in for the pill element: records the keyframes it is asked to play.
 const fakePill = () => {
@@ -28,5 +28,21 @@ describe("stretching nav pill", () => {
     expect(movePill(p, null, { l: 5, r: 5, top: 4, bottom: 4 })).toBeNull();
     expect(p.played).toBeNull();
     expect(p.style.clipPath).toContain("inset(4px 5px 4px 5px");
+  });
+});
+
+describe("page entrance order", () => {
+  it("animates every grid child, gives each tile in a group its own turn, and leaves titles to their own track", () => {
+    const root = document.createElement("div");
+    root.innerHTML = `<div class="page-head"><h1><span class="rise-mask"><span class="rise">T</span></span></h1></div>
+      <div class="greeting"><h1><span class="rise-mask"><span class="rise">Hi</span></span></h1><p class="state-line">ok</p></div>
+      <dl class="kpis"><div class="kpi">a</div><div class="kpi">b</div></dl><p class="notice">n</p><section class="panel-card">c</section>`;
+    expect(blocksOf(root).map((el) => el.className || el.tagName)).toEqual(["state-line", "kpi", "kpi", "notice", "panel-card"]);
+  });
+
+  it("orders blocks as they sit on screen: rows top to bottom, then left to right", () => {
+    const at = (top, left) => { const el = document.createElement("div"); el.getBoundingClientRect = () => ({ top, left }); el.id = `${top}-${left}`; return el; };
+    const els = [at(400, 0), at(100, 500), at(104, 0), at(400, 500)]; // source order: bottom-left first, as a grid can place them
+    expect(byPlacement(els).map((el) => el.id)).toEqual(["104-0", "100-500", "400-0", "400-500"]);
   });
 });

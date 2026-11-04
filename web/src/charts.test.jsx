@@ -16,7 +16,8 @@ describe("charts", () => {
   it("pairs each stat's label with its value for screen readers", () => {
     render(<dl><Stat label="Requests (24 h)" value="726" note="0 errors" /></dl>);
     expect(screen.getByRole("term").textContent).toBe("Requests (24 h)");
-    expect(screen.getAllByRole("definition").map((d) => d.textContent)).toEqual(["726", "0 errors"]);
+    // what a screen reader hears: a counting value keeps its climb aria-hidden and speaks only the final number
+    expect(screen.getAllByRole("definition").map((d) => d.querySelector(".sr-only")?.textContent ?? d.textContent)).toEqual(["726", "0 errors"]);
   });
 
   it("counts up from zero without flashing the final value, and gives screen readers only the final value", () => {

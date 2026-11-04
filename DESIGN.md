@@ -230,18 +230,30 @@ Canvas graph on `--bg-void`, 600px high (400px small), 20px radius, keyboard-foc
 ### Motion
 Timings come from `choreography.js` (the Reroute port): one ease-out quint `[0.22, 1, 0.36, 1]`, `DUR` press 0.14s, hover 0.15s, fade 0.2s, panel 0.22s, morph 0.45s; stagger 30ms capped at 7. CSS uses `--ease-out`, `--dur-hover`, `--dur-press`. Transform and opacity (or `translate`/`scale`) only; no layout animation. Map pulses are eased travel along an edge (read teal, write indigo, external orange, error red). With reduced motion (`reduced.js`, plus the CSS media query clamping durations) the edge lights briefly, camera moves are instant, and nothing slides.
 
-**Moving between pages** (`motion/pages.js`, from the reference clips chosen on 2026-11-01):
-- **Nav pill:** one accent pill behind the tabs stretches to the new tab. The leading edge travels 360ms on power3.out; the trailing edge travels 550ms on power3.inOut, so it lags and then catches up. Built as a sampled `clip-path` Web Animation.
-- **Page out:** the leaving page fades and blurs to 6px in about 90ms.
-- **Page in:** this was measured from the reference clip.
-  - Titles (`.rise` inside a `.rise-mask`) slide up from behind their own baseline over 700ms, starting at 150ms.
-  - Then the blocks (state line, KPI tiles, cards, toolbars) rise 24px into place in reading order, 65ms apart. They resolve from `blur(8px)` and opacity 0 over 650ms on the house ease, starting at 270ms.
-  - Up to 12 blocks are staggered; any later ones arrive together, through `choreography.js`'s `fx`.
-  - This is slower than Reroute's in-app entrances on purpose, because a page change is a moment to re-orient.
-- **Numbers count up:** KPI values and the uptime percentage climb from 0 as their tile arrives (each delayed to match its tile), over 1.1s on the house ease, and glide from old to new on refresh (`CountUp` in `charts.jsx`). They are written straight to the text node, never more decimals than the real value has; screen readers get only the final value.
-- **Theme switch:** the new theme grows in a circle from the toggle over 450ms (View Transitions, `::view-transition-new(root)`). Where View Transitions are unsupported, the switch is instant.
-- **Small pieces:** tooltips fade and scale in (0.14s), popovers scale in (0.18s), toasts rise 12px (0.32s), the switch thumb slides (0.26s), and rows that arrive live on the Events page slide in 6px (`row-in`, 0.36s). The first load of a table does not animate its rows. All use the house ease and `translate`, `scale` or opacity only.
-- **Reduced motion:** the pill jumps, blocks appear at once, and the theme switches instantly. Blur is the one exception to "transform and opacity only". It is kept at 8px or less, and it runs on page changes only, never while scrolling.
+**Moving between pages** (`motion/pages.js`; the shape comes from the reference clips chosen on 2026-11-01, the timings were tightened on 2026-11-04 after an animation review against Emil Kowalski's standards):
+- **Nav pill:** one accent pill behind the tabs stretches to the new tab. The leading edge travels 200ms on power3.out; the trailing edge travels 300ms on power3.inOut, so it lags and then catches up. Built as a sampled `clip-path` Web Animation.
+- **Page out:** none. The leaving page is replaced at once; the old 90ms blur-out redrew the old page for a frame as it ended (a flicker).
+- **Page in:**
+  - Titles (`.rise` inside a `.rise-mask`) slide up from behind their own baseline over 450ms, starting at 80ms.
+  - Then the blocks rise 12px into place, 40ms apart, top left to bottom right as they sit on screen (rows within 12px count as one row). They resolve from `blur(4px)` and opacity 0 over 400ms on the house ease, starting at 160ms. A full page has landed within about 850ms.
+  - A block is any child of the page grid; groups (`.kpis`, `.stats`, `.greeting`) give each tile its own turn. Nothing is picked by class name, so tables, notices and lists rise like cards.
+  - Every page starts at its top, so the first thing to move is the first thing on it. Blocks below the fold rise when scrolled into view, in the same order.
+  - All of it lives in one place: `<Page>` (`Page.jsx`, keyed by route so each page mounts fresh) running `pageEnter` in `motion/pages.js`. Pages never animate their own arrival.
+  - Up to 8 blocks are staggered; any later ones arrive together, through `choreography.js`'s `fx`.
+- **Numbers count up:** every KPI and stat value that is one number (`3`, `96%`, `6.5 h`, `US$0.02`), and the uptime percentage, climbs from 0 when its block starts to rise: `pageEnter` fires `page:reveal` with the block's delay and `CountUp` waits for it, so no page sets delays by hand. A number whose block is already in place (data that loaded later) climbs at once. Over 0.7s on the house ease, and glide from old to new on refresh (`CountUp` in `charts.jsx`). They are written straight to the text node, never more decimals than the real value has; screen readers get only the final value.
+- **Theme switch:** the new theme grows in a circle from the toggle over 450ms (View Transitions, `::view-transition-new(root)`). It's a rare action, so the longer time is fine. Where View Transitions are unsupported, the switch is instant.
+- **Small pieces:**
+  - The Ctrl+K palette opens with no animation: it's a keyboard shortcut used many times a day.
+  - Tooltips fade and scale in (0.14s) from the edge nearest their trigger; once tooltips are warm they appear with no animation.
+  - Popovers scale in from their trigger (0.18s).
+  - Toasts use a transition with `@starting-style` (0.25s in, rising 12px) and fade out over 0.15s before they're removed.
+  - Buttons and calendar events press to `scale: 0.97` / `0.98` and ease back on release (both 140ms).
+  - A hold-to-confirm released early unwinds its fill over 200ms.
+  - The switch thumb slides (0.2s) and stretches with `scale`, away from the edge it rests on.
+  - The sliding row highlight follows a mouse only (never a touch tap) and glides its position; its height jumps.
+  - Rows that arrive live on the Events page slide in 6px (`row-in`, 0.36s). The first load of a table does not animate its rows.
+  - All use the house ease, and `translate`, `scale`, `transform` or opacity only.
+- **Reduced motion:** gentler, not none. Movement goes and short fades stay. Page blocks fade in place over 200ms, popovers and tooltips fade over 150ms, and toasts fade without rising. The pill jumps, presses don't shrink, and the theme switches instantly. Set per element in `app.css`, not by zeroing every duration. Blur is the one exception to "transform and opacity only": it's kept at 4px, and runs on page changes only, never while scrolling.
 
 ### Accessibility
 - Every chart has a `details` table ("table-toggle") or text equivalent; gauge is `role="img"` with a label; decorative plots are `aria-hidden`.
@@ -267,3 +279,13 @@ Add one module and one registry entry in `web/src/panels/index.js` with `id`, `t
 - **Don't** animate layout properties or use ease-in.
 - **Don't** introduce hard offset shadows; depth is tonal and soft.
 - **Don't** use dark-mode status hues on light surfaces.
+
+## Demo surface (`web/src/demo`, added 2026-11-04)
+
+The fictional enterprise demo uses this system unchanged, plus a few patterns of its own (`web/src/demo/demo.css`):
+- **Guess tags:** a dashed outline and a small "OUR GUESS" label mark a value the demo guessed; a solid green outline and "YOUR ANSWER" mark one a reviewer corrected. They never sit inside data rows: each page lists its sources once, in a full-width strip above the feedback box. The Setup wizard, the IT Home's systems list, the Roles "who decides" card and Your systems are the only places tags appear inline.
+- **Lock chips:** small pills on calendar events, red for Locked, amber for Ask first, green for Anyone can move, accent for Waiting for approval, explained once in a legend above the week.
+- **Start strip and feedback box:** full-width cards with an accent-tinted border (start) or a dashed border (feedback). The feedback box is one line until focused.
+- **Header at three widths:** one row above 1600px; the tabs on their own row below that; on phones Your systems and Feedback move into the banner and Roles and Setup join the tab row.
+- **Content links** use `--accent-text` with no underline until hover, never browser blue.
+- A critique on 2026-11-04 scored the demo 23/40 before these fixes (`.impeccable/critique/`).

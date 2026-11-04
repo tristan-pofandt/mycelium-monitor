@@ -146,4 +146,4 @@ html { scrollbar-color: var(--border-strong) transparent; caret-color: var(--acc
 html, body { margin: 0; background: var(--bg-base); color: var(--text); font-family: var(--font); font-size: 15px; -webkit-font-smoothing: antialiased; }
 body { font-variant-numeric: tabular-nums; }
 :focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; border-radius: var(--r-tag); }
-@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
+/* Reduced motion is handled per element in app.css (movement removed, short fades kept), not by zeroing every duration. */

@@ -8,6 +8,7 @@ Mycelium is a monitoring hub for several apps: status, uptime, costs, usage, API
 - `web/`: React + Vite. Panels are registered in `web/src/panels/index.js` (`id`, `title`, `requires`, `component`).
 - `web/src/choreography.js`, `reduced.js`, `motion/fm.js` are copied from Reroute (`apps/plan-b-mvp/web/src/`) and the base of `web/src/tokens.css` ports Reroute's `DESIGN.md` tokens. Keep them in step with Reroute; all easing and timing comes from `choreography.js`; transform and opacity only; honour reduced motion.
 - The look (since 2026-11-01) is Mycelium's own dashboard layer on top of those tokens: top pill nav, soft cards, hatched charts, gauge, heatmap. `DESIGN.md` is its rulebook; the direction brief is `.impeccable/surfaces/web-src.md`.
+- `demo/`: the fictional enterprise demo for the design partner (front end in `web/src/demo/`, built by `npm run build:demo`, served with feedback capture by `demo/server.py`). Feedback lands in git-ignored `demo/feedback/`; never commit it.
 - `emitters/python/`: the emitter apps embed. `hooks/claude/`: the Claude Code hook. `infra/`: Dockerfile.
 
 ## Commands
@@ -15,13 +16,14 @@ Mycelium is a monitoring hub for several apps: status, uptime, costs, usage, API
 - Server tests: `cd server && python -m unittest -q`
 - Run the server: `cd server && python app.py` (http://127.0.0.1:8100)
 - Web: `cd web && npm ci && npm run build && npm test`; dev server `npm run dev` proxies `/api` and `/healthz` to 8100
+- Demo: `cd web && npm run build:demo`, then `python demo/server.py` (http://127.0.0.1:8200); tests `cd demo && python -m unittest -q`
 - Docker: `docker build -f infra/Dockerfile -t mycelium .`
 
 ## Rules
 
 - Events carry metadata only: never file contents, request bodies, tokens, keys or personal data.
 - App admin tokens live only in the server's environment; never send them to the browser or store them in SQLite.
-- The site is private (Tailscale only); the repo is public, so never commit secrets, `.env` files or databases.
+- The site is private (Tailscale only); the repo is public, so never commit secrets, `.env` files or databases. The one public exception is the fictional demo (Funnel :10000, fictional data, feedback behind an access code; see `demo/README.md`). Never put real data in it.
 - Add a feature as one collector plus one panel; don't hard-code app names outside configuration.
 - Accessibility: every visual (including the map) has a keyboard and screen-reader equivalent.
 - After meaningful work, update `docs/` and the vault note `Projects/Mycelium.md` (see `CLAUDE.local.md` if present), crediting Claude and noting human review is required.

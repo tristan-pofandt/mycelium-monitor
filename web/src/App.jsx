@@ -1,15 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router";
-import { AnimatePresence, motion } from "framer-motion";
 import { panelsFor } from "./panels/index.js";
-import { useReducedMotion } from "./reduced.js";
 import { useApi } from "./api.js";
 import Palette from "./Palette.jsx";
 import Login from "./Login.jsx";
 import { Icon, Logo } from "./icons.jsx";
 import { useTheme } from "./theme.js";
 import Page from "./Page.jsx";
-import { edgesOf, movePill, pageExit } from "./motion/pages.js";
+import { edgesOf, movePill } from "./motion/pages.js";
 import { StatusBadge } from "./panels/Status.jsx";
 import { Picker, Tip, ToastProvider, rovingKeys } from "./ui.jsx";
 
@@ -17,7 +15,7 @@ import { Picker, Tip, ToastProvider, rovingKeys } from "./ui.jsx";
 const capsOf = (apps, slug) =>
   slug === "all" ? [...new Set(apps.flatMap((a) => a.capabilities))] : apps.find((a) => a.slug === slug)?.capabilities || [];
 
-function ThemeToggle() {
+export function ThemeToggle() {
   const [theme, toggle] = useTheme();
   const next = theme === "dark" ? "light" : "dark";
   return (
@@ -37,12 +35,14 @@ function overall(apps, slug) {
 }
 
 // One accent pill behind the tabs that stretches to the active tab: leading edge first, trailing edge catching up.
-function usePill(rowRef, pillRef, panel) {
+export function usePill(rowRef, pillRef, panel) {
   const last = useRef(null);
   useLayoutEffect(() => {
     const place = (animate) => {
       const row = rowRef.current, pill = pillRef.current, tab = row?.querySelector(".pill.active")?.parentElement; // the <li>: its offsets are in the row
-      if (!row || !pill || !tab) return;
+      if (!row || !pill) return;
+      if (!tab) { pill.style.visibility = "hidden"; last.current = null; return; } // a page outside the tabs (Access, Settings): no highlight
+      pill.style.visibility = "";
       pill.style.width = `${row.scrollWidth}px`;
       const to = edgesOf(row, tab);
       movePill(pill, animate ? last.current : null, to);
@@ -59,7 +59,6 @@ function Shell({ apps }) {
   const { app = "all", panel } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const reduced = useReducedMotion();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const rowRef = useRef(null);
   const pillRef = useRef(null);
@@ -121,13 +120,9 @@ function Shell({ apps }) {
         </div>
       </header>
       <main className="content" id="main" tabIndex={-1}>
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div key={location.pathname} initial={false} animate={{ opacity: 1, filter: "blur(0px)" }} exit={pageExit(reduced)}>
-            <Page title={current.id === "overview" ? null : current.title} scope={appName}>
-              <Panel app={app} apps={apps} appName={appName} />
-            </Page>
-          </motion.div>
-        </AnimatePresence>
+        <Page key={location.pathname} title={current.id === "overview" ? null : current.title} scope={appName}>
+          <Panel app={app} apps={apps} appName={appName} />
+        </Page>
       </main>
       {paletteOpen && <Palette apps={apps} app={app} panels={visible} onClose={() => setPaletteOpen(false)} />}
     </div>

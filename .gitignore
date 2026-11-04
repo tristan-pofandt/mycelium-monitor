@@ -12,3 +12,5 @@ CLAUDE.local.md
 .claude/settings.local.json
 .impeccable/review/
 .impeccable/mocks/
+demo/feedback/
+.playwright-mcp/

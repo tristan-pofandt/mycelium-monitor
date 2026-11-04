@@ -222,7 +222,7 @@ Each phase ends in something usable. Effort: S is about a day, M a few days, L a
 |---|---|---|---|
 | A.1 Interviews | Sessions with the design partner: systems each site uses (ERP, HR and payroll, rostering, ticketing, maintenance, access control, cameras, visitors), the morning routine, reports built by hand, what needs approval and from whom, differences between sites, physical security incidents and audits, what corporate IT would require. Notes keep no names or quotes. | A one-page problem statement and top-10 needs the partner agrees with | S |
 | A.2 Personas | GM Operations, site manager, supervisor, employee, security officer, IT admin | Each persona has its top tasks and the data it needs | S |
-| A.3 Demo company | A fictional multi-site manufacturer (about 4 sites, 3 entities, 600 staff) with generated people, rosters, tasks, incidents, door and visitor events | A seed script loads it into a fresh database | M |
+| A.3 Demo company | A fictional multi-site manufacturer (about 4 sites, 3 entities, 600 staff) with generated people, rosters, tasks, incidents, door and visitor events. **Prototype done 2026-11-04:** `demo/` (see `demo/README.md`), a clickable front-end demo of phases C, E, F, G and H on this data, with six role views, 31 marked assumptions reviewers can correct, and feedback boxes on every page | The design partner and their IT team review the prototype and their feedback is logged | M |
 
 ### Phase B: enterprise foundation
 

@@ -4,6 +4,7 @@ import { Children, cloneElement, createContext, useCallback, useContext, useEffe
 import { createPortal } from "react-dom";
 import { Icon } from "./icons.jsx";
 import { reducedMotion } from "./reduced.js";
+import { CSS_EASE } from "./choreography.js";
 import { ToastBridge } from "./api.js";
 
 // ── Tooltip ───────────────────────────────────────────────────────────────
@@ -12,13 +13,15 @@ import { ToastBridge } from "./api.js";
 let warmUntil = 0;
 export function Tip({ label, children, describe = true, side = "top" }) {
   const [open, setOpen] = useState(false);
+  const [instant, setInstant] = useState(false);
   const [pos, setPos] = useState(null);
   const ref = useRef(null);
   const timer = useRef(null);
   const id = useId();
   const show = () => {
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => setOpen(true), performance.now() < warmUntil ? 0 : 500);
+    const warm = performance.now() < warmUntil;
+    timer.current = setTimeout(() => { setInstant(warm); setOpen(true); }, warm ? 0 : 500);
   };
   const hide = () => { clearTimeout(timer.current); if (open) warmUntil = performance.now() + 400; setOpen(false); };
   useLayoutEffect(() => {
@@ -38,7 +41,7 @@ export function Tip({ label, children, describe = true, side = "top" }) {
     <span ref={ref} className="tip-anchor" onPointerEnter={show} onPointerLeave={hide} onFocus={show} onBlur={hide}>
       {cloneElement(child, describe ? { "aria-describedby": open ? id : undefined } : {})}
       {open && pos && createPortal(
-        <span id={id} role="tooltip" className={`tooltip tooltip-${side}`} style={{ left: pos.x, top: pos.y }}>{label}</span>,
+        <span id={id} role="tooltip" className={`tooltip tooltip-${side} ${instant ? "tooltip-instant" : ""}`} style={{ left: pos.x, top: pos.y }}>{label}</span>,
         document.body)}
     </span>
   );
@@ -46,7 +49,8 @@ export function Tip({ label, children, describe = true, side = "top" }) {
 
 // ── Toasts ────────────────────────────────────────────────────────────────
 // A labelled region at the bottom right, announced politely. Each toast stays 4 s, paused while hovered or focused; Alt+T
-// moves focus to the newest one, Escape dismisses it. At most three show; older ones fold behind.
+// moves focus to the newest one, Escape dismisses it. At most three show; older ones fold behind. A toast may carry one action
+// ({ label, onClick }), such as Undo.
 const ToastCtx = createContext(() => {});
 export const useToast = () => useContext(ToastCtx);
 ToastBridge.use = useToast;
@@ -76,18 +80,21 @@ export function ToastProvider({ children }) {
   );
 }
 
-function Toast({ t, onDone }) {
+function Toast({ t, onDone: remove }) {
   const [paused, setPaused] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const onDone = () => { setLeaving(true); setTimeout(remove, 150); }; // fade out (app.css .is-leaving), then unmount
   useEffect(() => {
-    if (paused) return undefined;
+    if (paused || leaving) return undefined;
     const id = setTimeout(onDone, t.ms || 4000);
     return () => clearTimeout(id);
-  }, [paused]);
+  }, [paused, leaving]);
   return (
-    <li className={`toast toast-${t.tone}`} tabIndex={-1} onPointerEnter={() => setPaused(true)} onPointerLeave={() => setPaused(false)}
+    <li className={`toast toast-${t.tone} ${leaving ? "is-leaving" : ""}`} tabIndex={-1} onPointerEnter={() => setPaused(true)} onPointerLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)} onBlur={() => setPaused(false)} onKeyDown={(e) => e.key === "Escape" && onDone()}>
       <Icon name={t.tone === "bad" ? "errors" : t.tone === "good" ? "check" : "spark"} />
       <span>{t.title}</span>
+      {t.action && <button type="button" className="toast-action" onClick={() => { t.action.onClick(); onDone(); }}>{t.action.label}</button>}
       <button type="button" className="toast-close" onClick={onDone} aria-label="Dismiss notification"><Icon name="close" size={14} /></button>
     </li>
   );
@@ -123,7 +130,11 @@ export function HoldButton({ children, onConfirm, ms = 1200, className = "", dis
   const stop = () => {
     if (!timer.current) return;
     clearTimeout(timer.current); timer.current = null; setHeld(false);
-    fill.current?.getAnimations?.().forEach((a) => a.cancel());
+    const el = fill.current, run = el?.getAnimations?.()[0];
+    const at = run ? Math.min(1, (run.currentTime || 0) / ms) : 0;
+    el?.getAnimations?.().forEach((a) => a.cancel());
+    // let go early: the fill unwinds quickly from where it got to, instead of vanishing
+    if (at > 0 && !reducedMotion()) el.animate?.([{ transform: `scaleX(${at})` }, { transform: "scaleX(0)" }], { duration: 200, easing: CSS_EASE });
   };
   useEffect(() => () => clearTimeout(timer.current), []);
   return (
@@ -163,7 +174,7 @@ export function Skeleton({ height = 160, lines = 0 }) {
 
 // ── Picker: a button with a listbox popover (replaces a native select where the style matters) ──
 // Arrow keys, Home, End and typing a letter move; Enter or Space chooses; Escape or a click outside closes and returns focus.
-export function Picker({ value, options, onChange, label }) {
+export function Picker({ value, options, onChange, label, icon }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const btn = useRef(null);
@@ -193,7 +204,7 @@ export function Picker({ value, options, onChange, label }) {
     <div className="picker">
       <button ref={btn} type="button" className="picker-button" aria-haspopup="listbox" aria-expanded={open} aria-label={`${label}: ${current.label}`}
         onClick={() => setOpen((o) => !o)} onKeyDown={(e) => { if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); setOpen(true); } }}>
-        <span>{current.label}</span><Icon name="chevron" />
+        {icon && <Icon name={icon} className="picker-icon" />}<span>{current.label}</span><Icon name="chevron" />
       </button>
       {open && (
         <ul ref={list} className="popover" role="listbox" tabIndex={-1} aria-label={label} aria-activedescendant={`${id}-${active}`} onKeyDown={onKey}>
@@ -228,6 +239,7 @@ export function rovingKeys(e, selector) {
 export function useRowHighlight() {
   const glow = useRef(null);
   const onPointerOver = (e) => {
+    if (e.pointerType && e.pointerType !== "mouse") return; // a tap on a touch screen fires a hover; don't leave the highlight stuck
     const row = e.target.closest("[data-row]");
     const el = glow.current;
     if (!row || !el) return;

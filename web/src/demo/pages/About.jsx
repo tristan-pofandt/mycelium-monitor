@@ -1,0 +1,67 @@
+// About this demo: what it is, what to try, and how feedback works.
+import { useEffect } from "react";
+import { Link, useLocation } from "react-router";
+import { COMPANY, PERSONAS } from "../data.js";
+import { resetDemo, update } from "../store.js";
+import { useToast } from "../../ui.jsx";
+import { PRIVACY } from "../feedback.jsx";
+
+export default function About() {
+  const toast = useToast();
+  const { hash } = useLocation();
+  useEffect(() => { if (hash) requestAnimationFrame(() => document.querySelector(hash)?.scrollIntoView({ block: "start" })); }, [hash]);
+  return (
+    <>
+      <section className="panel-card span-2">
+        <h2>What this is</h2>
+        <p>An early prototype of Mycelium: one place to see and run every site, for everyone from the GM to the shop floor. {COMPANY.name} is {COMPANY.what};
+          every name and number is made up. Nothing is connected to a real system, and nothing you click changes anything outside this demo.</p>
+      </section>
+      <section className="panel-card">
+        <h2>Try this</h2>
+        <ol className="steps-list">
+          <li>On <Link to="/">Home</Link>, read the brief, then approve Saturday's shutdown.</li>
+          <li>Use <strong>Viewing as</strong> (top left) to see the same app as a Site Manager, a Supervisor and an Employee.</li>
+          <li>On <Link to="/people">People</Link>, drag a task onto someone in the team map.</li>
+          <li>On <Link to="/calendar">Calendar</Link>, as a Supervisor, try to move the locked ISO audit, then request a change.</li>
+          <li>On <Link to="/security">Security</Link>, hold to cancel the former employee's card, then open the Cyber security tab.</li>
+          <li>Walk through the <Link to="/setup">Setup wizard</Link>.</li>
+        </ol>
+      </section>
+      <section className="panel-card">
+        <h2>Feedback, please</h2>
+        <p>There's a feedback box at the bottom of every page, and a Feedback button in the header for menus or anything else. Short notes are perfect:
+          "we'd never use this", "this is what I check every morning", "this would need X before IT says yes".</p>
+        <p>{PRIVACY}</p>
+      </section>
+      <section className="panel-card">
+        <h2>Correct our guesses</h2>
+        <p>Each page lists the systems its data would come from, near the bottom. A dashed <span className="assumed-tag">Our guess</span> tag is a guess about your
+          systems or structure: click one to correct it, or open <Link to="/systems">Your systems</Link> to go through them all in order. Answers are visible to the others
+          reviewing this demo, and go to Tristan.</p>
+      </section>
+      <section className="panel-card it-card" id="it" aria-labelledby="it-h">
+        <h2 id="it-h">For IT: how a real deployment would work</h2>
+        <p className="muted small">The plan, open to your team's input. Nothing here is final, and no real company data is used before IT approves a pilot.</p>
+        <dl className="facts it-facts">
+          <dt>Hosting</dt><dd>Runs in your own cloud tenant (for example Azure) as containers. Data stays in your environment.</dd>
+          <dt>Sign-in</dt><dd>Your existing single sign-on, with directory sync, so joiners and leavers update by themselves.</dd>
+          <dt>Connections</dt><dd>Read-only connections to each system first. Systems without a cloud connection go through one small gateway per site that only connects outwards: no inbound ports.</dd>
+          <dt>Computers</dt><dd>No new agent where a system already knows the answer: screen-lock and encryption status come from your device management.</dd>
+          <dt>Actions</dt><dd>Read-only by default. An action such as cancelling a lost card comes from a short fixed list, uses a restricted service account, needs approval, and is logged.</dd>
+          <dt>Cameras</dt><dd>Health and events only (offline, tamper, motion in a restricted zone). Video never passes through Mycelium.</dd>
+          <dt>Audit</dt><dd>Every view of sensitive data and every change is recorded in a log that can't be edited, and can be exported.</dd>
+          <dt>AI</dt><dd>Off unless you turn it on. Answers cite their sources, and emails or documents can never make it take an action.</dd>
+          <dt>This demo</dt><dd>Runs on Tristan's own server with made-up data. Feedback and answers are stored there, only Tristan reads the feedback, and names are optional.</dd>
+        </dl>
+      </section>
+      <section className="panel-card">
+        <h2>The six views</h2>
+        <ul className="queue" role="list">{PERSONAS.map((p) => (
+          <li key={p.id} className="queue-item"><p><button type="button" className="link" onClick={() => update(() => ({ viewer: p.id }))}>{p.label}</button></p></li>
+        ))}</ul>
+        <button type="button" className="button" onClick={() => { resetDemo(); toast({ title: "Demo reset. Your answers and feedback are kept." }); }}>Reset what I've clicked</button>
+      </section>
+    </>
+  );
+}
