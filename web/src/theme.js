@@ -10,15 +10,23 @@ function saved() {
   try { return localStorage.getItem(KEY); } catch { return null; }
 }
 
+// The phone's status bar (theme-color in index.html) follows a picked theme, not only the system one.
+const BAR = { dark: "#08090d", light: "#f1f2f6" };
+const paintBar = (t) => document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", BAR[t]));
+
 export function applySavedTheme() {
   const t = saved();
-  if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+  if (t === "light" || t === "dark") {
+    document.documentElement.dataset.theme = t;
+    paintBar(t);
+  }
 }
 
 export const currentTheme = () => document.documentElement.dataset.theme || (mq?.matches ? "dark" : "light");
 
 function set(theme) {
   document.documentElement.dataset.theme = theme;
+  paintBar(theme);
   try { localStorage.setItem(KEY, theme); } catch { /* private window: the choice lasts this visit */ }
   subs.forEach((f) => f());
 }

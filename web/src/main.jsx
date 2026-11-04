@@ -8,6 +8,7 @@ import "./tokens.css";
 import "./app.css";
 
 applySavedTheme(); // before the first paint, so a saved theme never flashes the other one
+if (import.meta.env.PROD && "serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js"); // makes the app installable
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>

@@ -241,7 +241,7 @@ Each phase ends in something usable. Effort: S is about a day, M a few days, L a
 | C.1 Home screens per role | Employee, manager, site, executive and specialist homes from the same panels, filtered by permission; admins set default layouts per role | Each persona from A.2 lands on a useful home on the demo company | M |
 | C.2 Tasks and approvals | Built-in tasks and tickets; an approvals inbox; approval chains from policy | A leave request and a large event go through the right approvers | M |
 | C.3 Calendar | Layers, event types, approval rules, lock levels, change requests with a diff | A locked senior event can't be edited by a supervisor; an edit request reaches the owner | L |
-| C.4 Phone and PWA | Phone layout with the bottom tab bar; manifest, icons, a service worker for the app shell only (never API data); web push | "Install" appears in Chrome, Edge and Safari; an approval works one-handed | M |
+| C.4 Phone and PWA | Phone layout with the bottom tab bar; manifest, icons, a service worker for the app shell only (never API data); web push. **Manifest, icons and service worker done 2026-11-05** (see architecture.md, "Installable app"); the bottom tab bar and web push remain | "Install" appears in Chrome, Edge and Safari; an approval works one-handed | M |
 | C.5 Screen-reader pass | NVDA over the role homes, approvals and calendar (the deferred step 0.3) | Findings fixed or listed | S |
 | C.6 First demo | Walk the design partner through the demo company | Feedback logged and the order of E and F confirmed | S |
 

@@ -6,6 +6,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["demo/server.py"],
       "port": 8200
+    },
+    {
+      "name": "server",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["server/app.py"],
+      "port": 8100
     }
   ]
 }

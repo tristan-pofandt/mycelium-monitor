@@ -157,6 +157,14 @@ Mycelium proxies admin actions to the app's own admin API; the admin token never
 - **Design and accessibility:** Inter is bundled with the app (`@fontsource-variable/inter`, so a private site makes no Google Fonts request); small text uses `--text-muted` because `--text-faint` is under 4.5:1 on dark cards (the token stays as in Reroute); light mode gets darker status and accent hues that reach 4.5:1 (Mycelium additions in `tokens.css`); themed selection, scrollbar, caret and form accents; a drawn SVG icon set (`web/src/icons.jsx`) replaces Unicode glyphs; the app name sits beside the page heading instead of above it; a skip link; two stat tiles per row and a compact sidebar on phones; the uptime strip fits a phone.
 - **Checked** in the browser pane: dark and light themes, phone width (no page scrolls sideways), hover dimming, pulses and rings, reduced motion (edge glow instead of pulses), the skip link, and the palette returning focus. The Impeccable detector found nothing. Not checked: a real screen reader (NVDA or VoiceOver), and axe (loading it from a CDN into the page was refused by the permission classifier).
 
+## Installable app (PWA, 2026-11-05)
+
+- `web/public/` holds `manifest.webmanifest` (standalone, start `/`), the mark as `icon.svg` plus PNGs at 192 and 512, a maskable 512 (full-bleed accent, mark in the safe zone) and a 180 `apple-touch-icon.png`. The PNGs are drawn from the `Logo` geometry in `web/src/icons.jsx`; redraw them if the mark changes.
+- `web/public/sw.js` caches the app shell only: navigations go to the network first, with the cached `/` when offline, and hashed `/assets/` files are cached on first use. `/api/`, the stream, `/healthz` and anything that isn't a same-origin `GET` never touch it. Offline, the installed app opens and says the server can't be reached. Registered in production builds only (`web/src/main.jsx`).
+- `theme-color` follows the system theme and, once the owner picks one, the picked theme (`web/src/theme.js`), so the phone's status bar matches.
+- Install needs HTTPS (or localhost): the tailnet site at `https://<host>.ts.net:8443` qualifies. Chrome and Edge show an install button in the address bar; on iPhone, Safari's Share › Add to Home Screen.
+- Checked in the browser pane against a local build: the manifest and every icon serve with the right type, the worker activates and controls the page, the cache holds only `/` and `/assets/`, and with the server stopped the app opens and shows the "can't be reached" message. Not checked: installing on a real phone or PC, or the install prompt itself.
+
 ## Adding a feature
 
 - **Server:** a collector is a module in `server/collectors/` that registers `name`, `interval` and `run(app)`; it returns events or rollup rows. A panel's data comes from `server/api/<feature>.py`.
