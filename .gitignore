@@ -14,3 +14,5 @@ CLAUDE.local.md
 .impeccable/mocks/
 demo/feedback/
 .playwright-mcp/
+# Word exports (the demo overview holds the demo address and access code)
+*.docx
