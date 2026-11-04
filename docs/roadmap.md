@@ -53,7 +53,7 @@ Mycelium grows from "monitoring for my apps" into a **business operations hub**:
   2. A licence for the public repo (for example MIT or AGPL). **Open**, needed before phase K.
   3. Whether agents ever run actions, or stay read-only. **Open**; the plan assumes allow-listed actions later.
   4. The first compliance framework. **Open**; Essential Eight recommended, ISO 27001 physical controls likely for the wedge.
-  5. ~~A separate enterprise RegTech site~~ **Superseded 2026-11-04:** the enterprise product is now Mycelium itself; compliance is a module (phase J).
+  5. A separate enterprise RegTech app. **Decided 2026-11-04 (revised the same day):** compliance is a separate application that Mycelium controls as a plug-in. Mycelium collects, read-only; the compliance app maps evidence to controls, runs tests, takes attestations and exports (OSCAL and signed packs). Research and the ranked gaps: [RegTech market and gaps](../reports/RegTech%20market%20and%20gaps.md), notes in `research_notes/`. The first pack it recommends is read-only cross-vendor site evidence (physical security, people) plus Essential Eight per site from Intune, for one design-partner site.
   6. Pilot hosting: in the customer's cloud (recommended) or hosted by Tristan. **Open**, decide with the design partner.
 
 ## How it's built
@@ -306,7 +306,7 @@ Prioritised from pilot feedback. Each is a set of collectors and panels from the
 | Step | Contents | Effort |
 |---|---|---|
 | J.1 Cyber security centre | Security ledger, threat feed (`auth`, `ratelimit` and `security` event kinds), posture checks, more allow-listed actions; host agent for devices without Intune | L |
-| J.2 Compliance packs | Control library as data, evidence mapping, reports (PDF or Markdown); Essential Eight first, then ISO 27001 and WHS | L |
+| J.2 Compliance app | A separate plug-in app (decision 5): control library as data, evidence mapping, reports (OSCAL, PDF or Markdown); Essential Eight and site evidence first, then ISO 27001 and WHS | L |
 | J.3 Documents and money | Capture, extraction, review queue, matching, money map, finance packs | L |
 | J.4 CO₂ | Scope 1, 2 and 3 estimates from bills, receipts and spend; supplier questionnaire answers | M |
 | J.5 Small business and online sellers | Sales connectors, store audit, product research, marketing calendar | L |
@@ -334,7 +334,7 @@ Prioritised from pilot feedback. Each is a set of collectors and panels from the
 | 5 Security centre | J.1, with alerts in E.3 |
 | 6 Host agent | F.1 (site gateway), J.1 (device agent) |
 | 7 Compliance module | B.5 (audit), J.2 |
-| 8 Enterprise RegTech site | The whole plan: the enterprise product is Mycelium |
+| 8 Enterprise RegTech site | J.2, as a separate app controlled by Mycelium |
 
 ## How this fits Tristan's goals
 
