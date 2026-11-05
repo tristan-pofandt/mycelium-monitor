@@ -8,7 +8,14 @@
 .roster-grid thead th:first-child, .roster-grid tbody th, .roster-grid tfoot th { text-align: left; }
 .roster-grid tbody th, .roster-grid tfoot th, .roster-grid thead th:first-child { position: sticky; left: 0; z-index: 1; background: var(--bg-card); min-width: 150px; }
 .roster-grid thead th.is-today { color: var(--accent-text); }
+.roster-grid tbody th { max-width: 200px; overflow-wrap: anywhere; } /* a long name wraps instead of widening the sticky column */
 .roster-name { font-weight: 500; }
+@media (max-width: 760px) { .roster-grid tbody th, .roster-grid tfoot th, .roster-grid thead th:first-child { min-width: 112px; max-width: 132px; } }
+
+/* Selects in the toolbars shrink to the card on a phone (a long team or machine name made the page scroll sideways). */
+.roster-tools label { max-width: 100%; }
+.roster-tools select.input { min-width: 0; max-width: 100%; text-overflow: ellipsis; }
+.skills-table .badge { white-space: nowrap; }
 .roster-grid tbody tr:hover { background: transparent; } /* the cells carry their own hover */
 .roster-grid td.is-past { opacity: 0.6; }
 

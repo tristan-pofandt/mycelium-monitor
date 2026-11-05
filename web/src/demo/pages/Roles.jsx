@@ -1,6 +1,6 @@
 // Roles and permissions: what each role can do (ticked by the owner), which directory groups give which role, giving one person
 // a different role, and handing your approvals to someone else for a set time.
-import { Fragment, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { Link } from "react-router";
 import { HoldButton, useToast } from "../../ui.jsx";
 import { CAPS, DEFAULT_GRANTS, PEOPLE, PERSONAS, ROLES, SITES, dayOffset, fmtDay, inScope, person, siteName } from "../data.js";
@@ -25,6 +25,15 @@ function DefaultHome() {
   const offer = addable(role, list, grants[role] || []);
   const name = (id) => titleOf(cardById(id), role);
   const edit = (next, text) => { setDraft(next); setSaid(text); };
+  // Moving a card to the top or bottom disables the button just pressed, and Remove takes its row away: put focus somewhere
+  // that stays, or a keyboard user lands on the page.
+  const listRef = useRef(null);
+  const refocus = (row, which) => requestAnimationFrame(() => {
+    const rows = listRef.current?.children;
+    const li = rows?.[Math.min(row, rows.length - 1)];
+    const b = li ? [...li.querySelectorAll("button")].find((x) => x.textContent === which || x.getAttribute("aria-label") === which) : null;
+    (b && !b.disabled ? b : li?.querySelector("button:not(:disabled)") || listRef.current?.closest("section")?.querySelector("select"))?.focus();
+  });
   const save = () => {
     const prev = roleLayouts[role];
     update((s) => ({ roleLayouts: { ...s.roleLayouts, [role]: list } }));
@@ -46,13 +55,13 @@ function DefaultHome() {
       <div className="card-head"><div><h2 id="dh-h">Default Home for this role</h2><p className="card-sub">What people in the role see on Home until they customise it. People who customised keep theirs.</p></div></div>
       <label className="field">Role <select className="input" value={role} onChange={(e) => { setRole(e.target.value); setDraft(null); setPick(""); }}>
         {PERSONAS.map((p) => <option key={p.id} value={p.id}>{roleName(p.id)}</option>)}</select></label>
-      <ol className="queue home-default-list" role="list">{list.map((x, i) => (
+      <ol ref={listRef} className="queue home-default-list" role="list">{list.map((x, i) => (
         <li key={x.id} className="queue-item home-add-row">
           <p><span className="muted small">{i + 1}.</span> <strong>{name(x.id)}</strong>{x.size === 2 && !cardById(x.id).full ? <span className="muted small"> · wide</span> : ""}</p>
           <span className="home-tools-buttons" role="group" aria-label={`${name(x.id)}, position ${i + 1} of ${list.length}`}>
-            <button type="button" className="icon-button" disabled={i === 0} aria-label="Move up" onClick={() => edit(move(list, i, i - 1), `${name(x.id)} moved to position ${i} of ${list.length}`)}><Icon name="chevron" className="flip" /></button>
-            <button type="button" className="icon-button" disabled={i === list.length - 1} aria-label="Move down" onClick={() => edit(move(list, i, i + 1), `${name(x.id)} moved to position ${i + 2} of ${list.length}`)}><Icon name="chevron" /></button>
-            <button type="button" className="button" onClick={() => edit(list.filter((y) => y.id !== x.id), `${name(x.id)} removed`)}>Remove</button>
+            <button type="button" className="icon-button" disabled={i === 0} aria-label="Move up" onClick={() => { edit(move(list, i, i - 1), `${name(x.id)} moved to position ${i} of ${list.length}`); refocus(i - 1, "Move up"); }}><Icon name="chevron" className="flip" /></button>
+            <button type="button" className="icon-button" disabled={i === list.length - 1} aria-label="Move down" onClick={() => { edit(move(list, i, i + 1), `${name(x.id)} moved to position ${i + 2} of ${list.length}`); refocus(i + 1, "Move down"); }}><Icon name="chevron" /></button>
+            <button type="button" className="button" onClick={() => { edit(list.filter((y) => y.id !== x.id), `${name(x.id)} removed`); refocus(i, "Remove"); }}>Remove</button>
           </span>
         </li>
       ))}</ol>
@@ -221,7 +230,16 @@ export default function Roles() {
   const can = useCan();
   const { grants } = useDemo();
   const editable = p.id === "gm" || p.id === "it";
-  const set = (r, cap, on) => update((s) => ({ grants: { ...s.grants, [r]: on ? [...s.grants[r], cap] : s.grants[r].filter((c) => c !== cap) } }));
+  const set = (r, cap, on) => {
+    update((s) => ({ grants: { ...s.grants, [r]: on ? [...s.grants[r], cap] : s.grants[r].filter((c) => c !== cap) } }));
+    audit(`${on ? "gave" : "took"} "${CAPS.find((c) => c.id === cap).label}" ${on ? "to" : "from"} ${roleName(r)}`);
+  };
+  const reset = () => {
+    const before = grants;
+    update(() => ({ grants: DEFAULT_GRANTS }));
+    audit("put every role's permissions back to the defaults");
+    toast({ title: "Back to the default roles.", action: { label: "Undo", onClick: () => { update(() => ({ grants: before })); audit("undid the reset of role permissions"); } } });
+  };
   const groups = [...new Set(CAPS.map((c) => c.group))];
   return (
     <>
@@ -229,7 +247,7 @@ export default function Roles() {
       <section className="panel-card span-2">
         <div className="card-head">
           <div><h2>What each role can do</h2><p className="card-sub">Each role also has a scope: it only applies to the people and sites in its reach.</p></div>
-          {editable && <button type="button" className="button" onClick={() => { update(() => ({ grants: DEFAULT_GRANTS })); toast({ title: "Back to the default roles." }); }}>Reset to defaults</button>}
+          {editable && <button type="button" className="button" onClick={reset}>Reset to defaults</button>}
         </div>
         <div className="table-wrap">
           <table className="table matrix">

@@ -159,6 +159,8 @@ export default function People() {
   const scoped = root === me.id ? [me, ...PEOPLE.filter((p) => isUnder(p, me.id))] : PEOPLE;
   const [selected, setSelected] = useState(root);
   const [view, setView] = useState("map");
+  // Machine tickets are training records: for the people who roster, issue permits or check them at the door, not IT.
+  const skills = can("roster") || can("permits") || can("security");
   const open = useTasks().filter((t) => t.status !== "done").slice(0, 6);
   const [pick, setPick] = useState("");
   const assign = (taskId, to) => {
@@ -169,12 +171,12 @@ export default function People() {
   };
   const views = (
     <div role="group" aria-label="View" className="segmented" onKeyDown={(e) => rovingKeys(e, "button")}>
-      {[["map", "Map"], ["outline", "Outline"], ["skills", "Skills"]].map(([v, label]) => <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)}>{label}</button>)}
+      {[["map", "Map"], ["outline", "Outline"], ...(skills ? [["skills", "Skills"]] : [])].map(([v, label]) => <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)}>{label}</button>)}
     </div>
   );
   return (
     <>
-      {view === "skills" ? (
+      {view === "skills" && skills ? (
         <section className="panel-card span-2">
           <div className="card-head">
             <div><h2>Skills</h2><p className="card-sub">Who is certified to run each machine, when tickets run out, and which shifts are left short</p></div>

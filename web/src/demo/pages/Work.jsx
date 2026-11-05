@@ -64,7 +64,7 @@ export default function Work() {
       <section className="panel-card span-2">
         <div className="card-head">
           <div><h2>Tasks</h2><p className="card-sub">{shown.filter(isLate).length} overdue · {shown.filter((t) => t.status !== "done").length} open</p></div>
-          <div className="card-tools">
+          <div className="card-tools work-tools">
             <div role="group" aria-label="Whose tasks" className="segmented" onKeyDown={(e) => rovingKeys(e, "button")}>
               <button type="button" aria-pressed={filter === "mine"} onClick={() => setFilter("mine")}>Mine</button>
               {p.id !== "employee" && <button type="button" aria-pressed={filter === "scope"} onClick={() => setFilter("scope")}>Everyone in my view</button>}

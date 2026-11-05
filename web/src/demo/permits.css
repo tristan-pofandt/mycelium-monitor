@@ -8,3 +8,8 @@
 .permit-holders li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 8px 12px; border-radius: var(--r-field); background: var(--bg-pop); }
 .permit-unable li { font-size: 14px; }
 .permit-cell { white-space: nowrap; }
+.permit-holders li > span { min-width: 0; overflow-wrap: anywhere; }
+.permit-holders li > button { flex-shrink: 0; }
+/* Work's Tasks card tools (Work.jsx has no stylesheet of its own): the GM's site select wraps under the toggle on a phone. */
+.work-tools { flex-wrap: wrap; min-width: 0; }
+.work-tools select.input { min-width: 0; max-width: 100%; }

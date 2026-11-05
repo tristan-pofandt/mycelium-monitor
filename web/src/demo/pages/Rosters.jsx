@@ -46,14 +46,16 @@ function TeamSelect({ teams, team, setTeam }) {
 function ShiftMenu({ cell, options, current, label, onPick, onClose }) {
   const list = useRef(null);
   const [i, setI] = useState(Math.max(0, options.indexOf(current)));
+  const [, follow] = useState(0);
   const r = cell.el.getBoundingClientRect();
   const h = options.length * 40 + 14;
   useEffect(() => {
     list.current?.focus({ preventScroll: true });
     const down = (e) => { if (!list.current?.contains(e.target) && !cell.el.contains(e.target)) onClose(false); };
-    const away = () => onClose(false);
-    addEventListener("pointerdown", down); addEventListener("scroll", away, true); addEventListener("resize", away);
-    return () => { removeEventListener("pointerdown", down); removeEventListener("scroll", away, true); removeEventListener("resize", away); };
+    // Scrolling or resizing moves the list with its cell; closing here would drop keyboard focus onto the page.
+    const move = () => follow((n) => n + 1);
+    addEventListener("pointerdown", down); addEventListener("scroll", move, true); addEventListener("resize", move);
+    return () => { removeEventListener("pointerdown", down); removeEventListener("scroll", move, true); removeEventListener("resize", move); };
   }, []);
   const onKey = (e) => {
     const n = options.length;
@@ -64,10 +66,11 @@ function ShiftMenu({ cell, options, current, label, onPick, onClose }) {
     else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPick(options[i]); }
     else if (e.key === "Escape" || e.key === "Tab") { e.preventDefault(); onClose(true); }
   };
-  const top = r.bottom + 4 + h > innerHeight ? Math.max(8, r.top - 4 - h) : r.bottom + 4;
+  const above = r.bottom + 4 + h > innerHeight;
+  const top = above ? Math.max(8, r.top - 4 - h) : r.bottom + 4;
   return createPortal(
     <ul ref={list} className="popover shift-menu" role="listbox" tabIndex={-1} aria-label={label} aria-activedescendant={`shift-opt-${i}`} onKeyDown={onKey}
-      style={{ top, left: Math.max(8, Math.min(r.left, innerWidth - 216)) }}>
+      style={{ top, left: Math.max(8, Math.min(r.left, innerWidth - 216)), transformOrigin: above ? "bottom left" : "top left" }}>
       {options.map((o, k) => (
         <li key={o} id={`shift-opt-${k}`} role="option" aria-selected={o === current} className={k === i ? "is-active" : ""} onPointerMove={() => setI(k)} onClick={() => onPick(o)}>
           {WORD[o]}{o === current && <Icon name="check" size={14} />}
@@ -79,7 +82,8 @@ function ShiftMenu({ cell, options, current, label, onPick, onClose }) {
 // The week grid. readOnly: plain text cells (the GM's view). flagged: Map of cell key -> problem text.
 function RosterGrid({ people, teams, roster, edits, leave, week, readOnly, onSet, flagged, caption }) {
   const days = Array.from({ length: 7 }, (_, i) => week + i);
-  const [active, setActive] = useState([0, Math.max(0, Math.min(6, TODAY_INDEX - week))]);
+  const [activeRaw, setActive] = useState([0, Math.max(0, Math.min(6, TODAY_INDEX - week))]);
+  const active = [Math.min(activeRaw[0], people.length - 1), activeRaw[1]]; // a smaller team must still leave one cell in the Tab order
   const [menu, setMenu] = useState(null);
   const table = useRef(null);
   const drag = useRef(null);
@@ -134,6 +138,7 @@ function RosterGrid({ people, teams, roster, edits, leave, week, readOnly, onSet
       g.ghost.classList.add("roster-ghost");
       Object.assign(g.ghost.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px` });
       document.body.append(g.ghost);
+      fx([g.ghost], [{ scale: "1" }, { scale: "1.04" }], { duration: 120, easing: CSS_EASE, props: ["scale"] }); // the lift reads as "picked up"
       g.b.setPointerCapture(e.pointerId);
       g.b.classList.add("is-source");
       g.esc = (k) => { if (k.key === "Escape") end(null, true); };
@@ -152,6 +157,7 @@ function RosterGrid({ people, teams, roster, edits, leave, week, readOnly, onSet
   };
   function end(e, cancel = false) {
     const g = drag.current;
+    if (g?.held && e) { drag.current = { suppress: true }; setTimeout(() => { if (drag.current?.suppress) drag.current = null; }, 0); return; } // release after Escape: swallow its click
     if (!g?.b || (e && g.pid !== e.pointerId)) return;
     if (!g.ghost) { drag.current = null; return; } // it was a click: the cell opens its list
     removeEventListener("keydown", g.esc);
@@ -167,6 +173,7 @@ function RosterGrid({ people, teams, roster, edits, leave, week, readOnly, onSet
       fx([ghost], IN_CURVE.map((v, i) => ({ offset: i / (IN_CURVE.length - 1), translate: `${(dx * (1 - v)).toFixed(1)}px ${(dy * (1 - v)).toFixed(1)}px` })),
         { duration: 200, props: ["translate"], done: (el) => el.remove() }).finished.then(() => ghost.remove());
     }
+    if (!e) { drag.current = { held: true }; return; } // Escape: the button is still down, so wait for its release
     drag.current = { suppress: true }; // swallow the click that follows the pointerup
     setTimeout(() => { if (drag.current?.suppress) drag.current = null; }, 0);
   }
@@ -269,7 +276,7 @@ function FillGaps({ roster, people, leave, onSet }) {
             </div>
           </li>
         ))}</ul>
-      ) : <p className="muted small" role="status">No more suggestions.</p>)}
+      ) : <p className="muted small" role="status">{list.suggestions.length || list.left.length ? "No more suggestions." : "Nothing to fill: every shift is at headcount and every machine has a ticket holder."}</p>)}
       {list?.left.length > 0 && <p className="notice small">{list.left.length === 1 ? "One gap has" : `${list.left.length} gaps have`} nobody suitable you can roster, for example: {list.left[0].text} Someone needs a ticket, or another team has to help.</p>}
       <SourceNote ids={["training"]} />
     </section>
@@ -340,7 +347,7 @@ function SendCard({ persona, me, people, edits, leave, problems, scope }) {
       )}
       {sent?.status === "sent" && !task && <p className="muted small">Last sent at {sent.at} by {sent.by}.</p>}
       {task && <TaskChip task={task} />}
-      <p>{diff.changes.length ? <><strong>{diff.changes.length} {diff.changes.length === 1 ? "shift" : "shifts"} changed</strong> for {diff.people} {diff.people === 1 ? "person" : "people"} since the last send.</> : waitingOn ? "Nothing else has changed since you sent it." : "Nothing has changed since the last send."}</p>
+      <p>{diff.changes.length ? <><strong>{diff.changes.length} {diff.changes.length === 1 ? "shift" : "shifts"} changed</strong> for {diff.people} {diff.people === 1 ? "person" : "people"} since the last send.</> : waitingOn ? "Nothing else has changed since it went for approval." : "Nothing has changed since the last send."}</p>
       {open && (
         <div className="roster-diff">
           <ul role="list" aria-label="Changes to send">{diff.changes.slice(0, 10).map((c) => (
@@ -372,11 +379,11 @@ function Planner({ persona, me }) {
   const shown = team === "all" || teams.length < 2 ? teams : teams.filter((t) => t.id === team);
   const optOut = useDemo((s) => s.commuteOptOut);
   const problems = useMemo(() => {
-    const ids = new Set(people.map((p) => p.id));
-    // Floods and road closures in the next two days: only people who opted in to route alerts, only this planner's people (weather.js).
+    // Floods and road closures in the next two days: only people who opted in to route alerts, one line per team (weather.js
+    // counts the whole shift at the site, so two day-shift teams would otherwise repeat the same line).
     const weather = [1, 2].flatMap((d) => teams.flatMap((t) => rosterWeatherRisks(t.site, d, t.shift, optOut)
-      .map((w) => ({ ...w, people: w.people.filter((id) => ids.has(id)) })).filter((w) => w.people.length)
-      .map((w) => ({ kind: "weather", text: w.text.replace(/^\d+/, String(w.people.length)), day: TODAY_INDEX + d, team: t.id, site: t.site, shift: t.shift }))));
+      .map((w) => ({ ...w, people: w.people.filter((id) => t.members.some((m) => m.id === id)) })).filter((w) => w.people.length)
+      .map((w) => ({ kind: "weather", text: `${teams.length > 1 ? `${t.lead.name.split(" ")[0]}'s team, ` : ""}${w.text.replace(/^\d+/, String(w.people.length))}`, day: TODAY_INDEX + d, team: t.id, site: t.site, shift: t.shift }))));
     return [...weather, ...rosterProblems(roster, { people, leave }).filter((x) => x.kind !== "skill" || teams.some((t) => t.shift === x.shift))];
   }, [roster, leave, people, teams, optOut]);
   const flagged = useMemo(() => new Map(problems.filter((x) => x.cell).map((x) => [x.cell, x.text])), [problems]);
@@ -409,9 +416,9 @@ function Planner({ persona, me }) {
       <section className="panel-card roster-card">
         <div className="card-head">
           <div><h2>Roster, {scope}</h2>
-            <p className="card-sub">{rows.length} people, {week ? "next week" : "this week"}. Pick a cell to change a shift. With a mouse, drag a shift onto one of the same person's days off to add an extra shift.</p></div>
+            <p className="card-sub">{rows.length} {rows.length === 1 ? "person" : "people"}, {week ? "next week" : "this week"}. Pick a cell to change a shift. With a mouse, drag a shift onto one of the same person's days off to add an extra shift.</p></div>
         </div>
-        <div className="toolbar">
+        <div className="toolbar roster-tools">
           <WeekSwitch week={week} setWeek={setWeek} />
           <TeamSelect teams={teams} team={team} setTeam={setTeam} />
         </div>
@@ -457,8 +464,8 @@ function CoverageOnly() {
             }))}</tbody>
           </table>
         </div>
-        <div className="toolbar roster-open">
-          <label>Open a site, read-only <select className="input" value={site} onChange={(e) => { setSite(e.target.value); setTeam("all"); }}>
+        <div className="toolbar roster-tools roster-open">
+          <label>Open a site, read-only <select className="input" value={site} onChange={(e) => { setSite(e.target.value); setTeam(TEAMS.find((t) => t.site === e.target.value)?.id || "all"); }}>
             <option value="">Choose a site</option>{SITES.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
           {site && <TeamSelect teams={teams} team={team} setTeam={setTeam} />}
         </div>

@@ -150,6 +150,11 @@ export function IssuePermit({ task, onClose }) {
   const [area, setArea] = useState((guess || areas[0])?.name);
   const [start, setStart] = useState("now"), [hours, setHours] = useState(8);
   const [holders, setHolders] = useState([]);
+  const [said, setSaid] = useState("");
+  const form = useRef(null);
+  // The button pressed goes away (a "Try" name, a Remove), so focus returns to the holder search and the change is spoken.
+  const addHolder = (id) => { setHolders((h) => [...h, id]); setSaid(`${person(id).name} added as a holder.`); requestAnimationFrame(() => form.current?.querySelector("input")?.focus()); };
+  const dropHolder = (id) => { setHolders((h) => h.filter((x) => x !== id)); setSaid(`${person(id).name} removed.`); requestAnimationFrame(() => form.current?.querySelector("input")?.focus()); };
   const from = startAt(start), to = from + hours * H;
   const people = inScope(p).filter((x) => x.site === site && x.status === "active" && x.role !== "gm");
   const able = people.filter((x) => canHold(x, type, to));
@@ -169,7 +174,7 @@ export function IssuePermit({ task, onClose }) {
     onClose();
   };
   return (
-    <form className="permit-form" onSubmit={issue}>
+    <form ref={form} className="permit-form" onSubmit={issue}>
       <div className="card-head">
         <div><h2>Issue a permit to work</h2>{task && <p className="card-sub">For "{task.title}"</p>}</div>
         <button type="button" className="icon-button" onClick={onClose} aria-label="Close"><Icon name="close" /></button>
@@ -187,13 +192,13 @@ export function IssuePermit({ task, onClose }) {
         <label className="field"><span>Lasts</span>
           <select className="input" value={hours} onChange={(e) => setHours(Number(e.target.value))}>{[2, 4, 8, 12].map((h) => <option key={h} value={h}>{h} hours (to {when(startAt(start) + h * H)})</option>)}</select></label>
       </div>
-      <PersonSearch label="Add a holder" people={able.filter((x) => !chosen.includes(x.id))} value={null} onChange={(id) => id && setHolders((h) => [...h, id])} placeholder="Name or job, for example fitter" />
+      <PersonSearch label="Add a holder" people={able.filter((x) => !chosen.includes(x.id))} value={null} onChange={(id) => id && addHolder(id)} placeholder="Name or job, for example fitter" />
       <p className="muted small">{able.length ? `${able.length} ${able.length === 1 ? "person" : "people"} in your view at ${siteName(site)} hold a current ${ticket} ticket for the whole permit.` : `Nobody in your view at ${siteName(site)} holds a current ${ticket} ticket for this permit.`}
-        {able.length > 0 && !chosen.length && <> Try: {able.slice(0, 3).map((x, i) => <span key={x.id}>{i ? ", " : ""}<button type="button" className="link" onClick={() => setHolders((h) => [...h, x.id])}>{x.name}</button></span>)}.</>}</p>
+        {able.length > 0 && !chosen.length && <> Try: {able.slice(0, 3).map((x, i) => <span key={x.id}>{i ? ", " : ""}<button type="button" className="link" onClick={() => addHolder(x.id)}>{x.name}</button></span>)}.</>}</p>
       {chosen.length > 0 && (
         <ul className="permit-holders" role="list" aria-label="Holders">{chosen.map((id) => (
           <li key={id}><span>{person(id).name} <span className="muted small">{person(id).title}</span></span>
-            <button type="button" className="link small" onClick={() => setHolders((h) => h.filter((x) => x !== id))}>Remove<span className="sr-only"> {person(id).name}</span></button></li>
+            <button type="button" className="link small" onClick={() => dropHolder(id)}>Remove<span className="sr-only"> {person(id).name}</span></button></li>
         ))}</ul>
       )}
       {unable.length > 0 && (
@@ -203,6 +208,7 @@ export function IssuePermit({ task, onClose }) {
           {unable.length > 8 && <p className="muted small">and {unable.length - 8} more.</p>}
         </details>
       )}
+      <p className="sr-only" aria-live="polite">{said}</p>
       <div className="actions"><button type="submit" className="button button-primary" disabled={!chosen.length || !a}>Issue permit</button>
         <button type="button" className="button" onClick={onClose}>Cancel</button></div>
       <p className="muted small">{a?.door ? `Only holders should open ${a.door} while it's live; anyone else badging in raises an alert.` : "This area has no restricted door, so the permit is tracked but not checked at a door."} A real

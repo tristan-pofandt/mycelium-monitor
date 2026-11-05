@@ -7,6 +7,7 @@ import { Switch, useToast } from "../../ui.jsx";
 import { EVENTS, EVENT_TYPES, PLACES, WEEK_START, defaultLock, editMode, needsApproval, person, siteName } from "../data.js";
 import { SourceNote } from "../bits.jsx";
 import { SystemName } from "../feedback.jsx";
+import { SHIFT_TIMES, isWork, useRoster } from "../roster.js";
 import { update, useCan, useDemo, usePersona } from "../store.js";
 
 const DAYS = Array.from({ length: 7 }, (_, i) => { const d = new Date(WEEK_START); d.setDate(d.getDate() + i); return d; });
@@ -26,9 +27,11 @@ function useEvents() {
   const p = usePersona();
   const me = person(p.person);
   const { events, eventEdits } = useDemo();
-  // Front-line staff see their own shifts on the calendar, set by their supervisor (so moving one means asking first).
-  const shifts = ["employee", "supervisor"].includes(p.id) ? [0, 1, 2, 3, 4].map((day) => ({
-    id: `shift-${day}`, title: `Your ${me.shift.toLowerCase()} shift`, type: "Shift", day, start: me.shift === "Day" ? 6 : 14, hours: 8,
+  const { roster } = useRoster();
+  // Front-line staff see their own shifts on the calendar, from the roster their supervisor plans (so moving one means asking first).
+  const mine = roster[me.id] || [];
+  const shifts = ["employee", "supervisor"].includes(p.id) ? [0, 1, 2, 3, 4, 5, 6].filter((day) => isWork(mine[day])).map((day) => ({
+    id: `shift-${day}`, title: `Your ${mine[day].toLowerCase()} shift`, type: "Shift", day, start: SHIFT_TIMES[mine[day]][0], hours: 8,
     owner: p.id === "employee" ? me.manager : me.id, site: me.site, lock: p.id === "employee" ? "request" : "open",
   })) : [];
   const all = [...shifts, ...EVENTS, ...events].map((e) => ({ ...e, ...eventEdits[e.id] })).filter((e) => !e.deleted && e.status !== "declined");

@@ -66,7 +66,7 @@ export function SkillsMatrix({ persona }) {
           ))}</ul>
         ) : <p className="muted small">Every machine in your view has enough certified people on every shift for the next two weeks.</p>}
       </div>
-      <div className="toolbar">
+      <div className="toolbar roster-tools">
         {sites.length > 1 && <label>Site <select className="input" value={site} onChange={(e) => { setSite(e.target.value); setMachine("all"); setShift("all"); }}>
           {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>}
         <label>Shift <select className="input" value={shift} onChange={(e) => setShift(e.target.value)}>
@@ -74,9 +74,9 @@ export function SkillsMatrix({ persona }) {
         <label>Machine <select className="input" value={machine} onChange={(e) => setMachine(e.target.value)}>
           <option value="all">All</option>{cols.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
       </div>
-      <Table caption={`Machine tickets at ${siteName(site)}`} head={["Name", "Shift", ...shown.map((c) => c.name)]} empty="Nobody matches these filters."
+      <div className="skills-table"><Table caption={`Machine tickets at ${siteName(site)}`} head={["Name", "Shift", ...shown.map((c) => c.name)]} empty="Nobody matches these filters."
         keys={rows.slice(0, limit).map((p) => [p.name, p.shift, ...shown.map((c) => skillBadge(p, c.needs).word)])}
-        rows={rows.slice(0, limit).map((p) => [<span key="n">{p.name}<span className="muted small block">{p.title}</span></span>, p.shift, ...shown.map((c) => <Badge key={c.id} b={skillBadge(p, c.needs)} />)])} />
+        rows={rows.slice(0, limit).map((p) => [<span key="n">{p.name}<span className="muted small block">{p.title}</span></span>, p.shift, ...shown.map((c) => <Badge key={c.id} b={skillBadge(p, c.needs)} />)])} /></div>
       {rows.length > limit && (
         <div className="table-more">
           <span className="muted small">Showing {limit} of {rows.length}. Pick a shift or machine to narrow it down.</span>
