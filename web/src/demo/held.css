@@ -1,0 +1,20 @@
+/* What we hold about you (pages/MyData.jsx). Tokens only; nothing here animates. */
+.held-intro { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; }
+.held-intro h2 { margin: 0 0 4px; }
+.held-intro p { margin: 0; max-width: 62ch; }
+
+.held-part + .held-part { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.held-h { font-size: 15px; margin: 0 0 8px; }
+.held-part .facts dd { overflow-wrap: anywhere; }
+
+/* Where it came from, who can see it, how long it's kept: the same three lines under every part */
+.held-meta { display: grid; gap: 4px; margin: 10px 0 0; padding: 10px 12px; border-radius: var(--r-field); background: var(--bg-pop); }
+.held-meta div { display: grid; grid-template-columns: 8.5em 1fr; gap: 12px; }
+.held-meta dt { color: var(--text-muted); }
+.held-meta dd { margin: 0; }
+@media (max-width: 480px) { .held-meta div { grid-template-columns: 1fr; gap: 0; } }
+
+.held-never { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 14px; }
+.held-never li { display: flex; gap: 10px; align-items: flex-start; }
+.held-never .icon { flex: none; margin-top: 3px; color: var(--text-muted); }
+.held-part > p.small { margin: 0 0 8px; }

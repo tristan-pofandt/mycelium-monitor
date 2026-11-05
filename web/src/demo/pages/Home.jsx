@@ -197,6 +197,7 @@ function EmployeeHome({ me }) {
       </Card>
       <Card title="Today" to="/calendar" label="Open calendar"><TodayEvents site={me.site} shift={me.shift} /></Card>
       <WeatherCard />
+      <Card title="What we hold about you" to="/my-data" label="Open my data"><p className="muted">Your record, where each part came from, who can see it and who has looked. <Link to="/my-data">See my data</Link></p></Card>
     </>
   );
 }

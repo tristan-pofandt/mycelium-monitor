@@ -1,11 +1,12 @@
 // Work and approvals: one inbox for everything waiting on you, the tasks in your scope (from whichever tools hold them),
 // a quick way to hand out a task, and your own requests and tickets.
 import { useState } from "react";
+import { Link } from "react-router";
 import { rovingKeys, useToast } from "../../ui.jsx";
 import { SITES, TICKETS, dayOffset, fmtDay, inScope, person } from "../data.js";
 import { ApprovalsList, PersonSearch, SourceNote, TaskRow, isLate, useApprovals, useTasks } from "../bits.jsx";
 import { SystemName } from "../feedback.jsx";
-import { update, useCan, usePersona } from "../store.js";
+import { update, useCan, useDemo, usePersona } from "../store.js";
 import { PermitsCard } from "../permits.jsx";
 
 function NewTask() {
@@ -42,6 +43,7 @@ export default function Work() {
   const [site, setSite] = useState("all");
   const shown = tasks.filter((t) => site === "all" || t.site === site);
   const { sent, status } = useApprovals();
+  const fixes = useDemo((s) => s.dataRequests).filter((r) => r.personId === p.person); // corrections asked for on My data
   const cols = [["todo", "To do"], ["doing", "In progress"], ["done", "Done"]];
   const toast = useToast();
   const requestDayOff = () => {
@@ -85,7 +87,8 @@ export default function Work() {
       {can("assign") && <section className="panel-card"><h2>Hand out a task</h2><NewTask /></section>}
       <section className="panel-card">
         <h2>My requests</h2>
-        {sent.length ? <ul className="queue" role="list">{sent.map((a) => <li key={a.id} className="queue-item"><p>{a.title}</p><p className="muted small">{status(a) || "Waiting"} · approver: {a.approver.replace("_", " ")}</p></li>)}</ul>
+        {sent.length || fixes.length ? <ul className="queue" role="list">{sent.map((a) => <li key={a.id} className="queue-item"><p>{a.title}</p><p className="muted small">{status(a) || "Waiting"} · approver: {a.approver.replace("_", " ")}</p></li>)}
+          {fixes.map((r) => <li key={r.id} className="queue-item"><p><span className="badge">Data</span> Correct {r.card.toLowerCase()}: {r.text}</p><p className="muted small">{r.status} · <Link to="/my-data">My data</Link></p></li>)}</ul>
           : <p className="muted">You have no open requests. Leave, shift swaps and change requests you send show here with their status.</p>}
         {p.id !== "gm" && <button type="button" className="button" onClick={requestDayOff}>Request a day off next Friday</button>}
       </section>

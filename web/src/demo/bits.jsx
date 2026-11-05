@@ -1,5 +1,5 @@
 // Pieces several demo pages share: approvals, alerts, tasks and the person dialog, each filtered to what the persona may see.
-import { Fragment, useId, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router";
 import { APPROVALS, MACHINES, PEOPLE, SECURITY_ALERTS, TASKS, certName, dayOffset, fmtAgo, fmtDay, person, qualified, siteName, under, inScope } from "./data.js";
@@ -8,6 +8,7 @@ export { SourceNote };
 import { audit, update, useCan, useDemo, usePersona } from "./store.js";
 import { Icon } from "../icons.jsx";
 import { EmptyState, HoldButton, Tip, useToast } from "../ui.jsx";
+import { viewReason } from "./held.js";
 import { PermitBadge } from "./permits.jsx"; // permits.jsx uses PersonSearch from here: a cycle that's safe because both only run at render
 
 export const SEV = { high: "badge-bad", medium: "badge-warn", low: "badge-none" };
@@ -179,6 +180,13 @@ export function PersonCard({ id, onClose }) {
   const can = useCan();
   const role = useDemo((s) => s.roleOf[id]);
   const reports = PEOPLE.filter((x) => x.manager === id).length;
+  const logged = useRef(null);
+  useEffect(() => { // My data's "Who looked at your record": once per open, never for your own record
+    const key = `${persona.id}|${id}`;
+    if (viewer.id === id || logged.current === key) return;
+    logged.current = key;
+    update((s) => ({ views: [{ at: Date.now(), viewer: persona.label.replace(" (you)", ""), viewerPersonId: viewer.id, personId: id, why: viewReason(persona, viewer, p) }, ...s.views].slice(0, 60) }));
+  }, [persona.id, id]);
   return (
     <>
       <div className="card-head">
@@ -196,7 +204,7 @@ export function PersonCard({ id, onClose }) {
         <dt>Mycelium role</dt><dd>{role || p.role.replace("_", " ")}</dd>
         {p.certs.map((c) => <Fragment key={c.name}><dt>{c.name}</dt><dd className="late">expires {fmtDay(c.expires)}</dd></Fragment>)}
       </dl>
-      <p className="notice small"><strong>Why can you see this?</strong> {why(persona, viewer, p)}</p>
+      <p className="notice small"><strong>Why can you see this?</strong> {why(persona, viewer, p)}{viewer.id === id && <> <Link to="/my-data" onClick={onClose}>See everything we hold about you</Link></>}</p>
       <SourceNote ids={["hr"]} />
     </>
   );
