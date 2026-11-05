@@ -27,6 +27,15 @@ export default function About() {
           <li>On <Link to="/security">Security</Link>, hold to cancel the former employee's card, then open the Cyber security tab.</li>
           <li>Walk through the <Link to="/setup">Setup wizard</Link>.</li>
         </ol>
+        <h3 className="about-sub">New this week</h3>
+        <ol className="steps-list">
+          <li>As the Shift Supervisor, open <Link to="/rosters">Rosters</Link>, add a shift on someone's day off and watch Problems flag the 48-hour week. Send it, then approve it as the Site Manager.</li>
+          <li>On <Link to="/people">People</Link>, open Skills: Toowoomba's afternoon shift loses its last crane ticket in two days.</li>
+          <li>As the Site Manager, open <Link to="/work">Work</Link> and issue a permit: only people with a current ticket can be picked. Security's door activity shows whether each read at a restricted door had a permit.</li>
+          <li>On <Link to="/sites?site=ips&view=map">Sites, Ipswich, Map</Link>, jump to "Former employee's card at Gate 2", then press Play to replay the door reads.</li>
+          <li>As the Shift Supervisor, read Weather and roads on Home. Then, as the Employee, turn route alerts off: you drop out of the supervisor's list.</li>
+          <li>On <Link to="/documents?tab=review">Documents</Link>, see why the Moorvale invoice is flagged, accept a corrected one, and export the tax pack.</li>
+        </ol>
       </section>
       <section className="panel-card">
         <h2>Feedback, please</h2>
@@ -51,6 +60,11 @@ export default function About() {
           <dt>Actions</dt><dd>Read-only by default. An action such as cancelling a lost card comes from a short fixed list, uses a restricted service account, needs approval, and is logged.</dd>
           <dt>Cameras</dt><dd>Health and events only (offline, tamper, motion in a restricted zone). Video never passes through Mycelium.</dd>
           <dt>Audit</dt><dd>Every view of sensitive data and every change is recorded in a log that can't be edited, and can be exported.</dd>
+          <dt>Rosters</dt><dd>Reads shifts, teams and leave from your rostering system and HR, and tickets from training records. It writes a roster back only through one fixed "publish draft" action after a person approves it; the rostering system stays the record. Stores draft changes and who approved them, not timesheets or pay.</dd>
+          <dt>Permits</dt><dd>Reads permits from where they're written today, tickets from training records and card reads from access control. By default it only alerts. Adding holders' cards to an area's access group for the permit window would be a fixed, approved action.</dd>
+          <dt>Site map</dt><dd>Reads door events, camera health (never video), alarm states and machine states, all read-only. Stores one floor plan per site, drawn once in setup from a PDF. People per area are counted from card reads, not named.</dd>
+          <dt>Weather and roads</dt><dd>Would read the Bureau of Meteorology's public warnings and QLDTraffic's open data (their terms of reuse to be checked). Home postcodes come from HR only for staff who opted in; addresses are never read. The demo fetches nothing.</dd>
+          <dt>Documents</dt><dd>Reads only nominated locations (an accounts payable mailbox, one SharePoint library, a scanned-receipts folder), never whole drives. Extraction runs in your own tenant. Stores the extracted fields, review decisions and a link to each file. Never pays, never changes the finance system, never lodges anything.</dd>
           <dt>AI</dt><dd>Off unless you turn it on. Answers cite their sources, and emails or documents can never make it take an action.</dd>
           <dt>This demo</dt><dd>Runs on Tristan's own server with made-up data. Feedback and answers are stored there, only Tristan reads the feedback, and names are optional.</dd>
         </dl>

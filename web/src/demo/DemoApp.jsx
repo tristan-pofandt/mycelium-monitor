@@ -26,6 +26,7 @@ import Documents from "./pages/Documents.jsx";
 import Audit from "./pages/Audit.jsx";
 import Emergency from "./pages/Emergency.jsx";
 import MyData from "./pages/MyData.jsx";
+import { RollCallButton, RollCallDialog, RollCallLine } from "./rollcall.jsx";
 
 // cap: the permission (or any of several) a persona needs to see the page (Roles and permissions); pages without one are for everyone.
 export const PAGES = [
@@ -77,6 +78,7 @@ function Shell() {
   const location = useLocation();
   const persona = usePersona();
   const { answers, grants } = useDemo();
+  const rollcallOn = useDemo((s) => !!s.rollcall); // the banner turns red on every page while a roll call runs (rollcall.jsx)
   const rowRef = useRef(null), pillRef = useRef(null);
   usePill(rowRef, pillRef, `${persona.id}/${id}`);
   useEffect(() => { loadAnswers(); }, []);
@@ -111,17 +113,19 @@ function Shell() {
         <div className="topbar-end">
           <SystemsLink answered={answered} className="button systems-button" />
           <button type="button" className="button feedback-button" onClick={() => openFeedback(null)}><Icon name="message" /><span>Feedback</span></button>
+          <RollCallButton className="header-rollcall" />
           <ThemeToggle />
           {tools.map((p) => (
             <NavLink key={p.id} to={`/${p.id}`} className="button tool-link"><Icon name={p.icon} /><span>{p.short}</span></NavLink>
           ))}
         </div>
       </header>
-      <div className="demo-banner">
-        <p><strong>Demo:</strong> {COMPANY.name} is made up, and so is every number.<span className="banner-long"> Dashed <span className="assumed-tag">Our guess</span> tags
-          mark what we guessed about your systems.</span></p>
+      <div className={`demo-banner ${rollcallOn ? "is-rollcall" : ""}`}>
+        {rollcallOn ? <RollCallLine /> : <p><strong>Demo:</strong> {COMPANY.name} is made up, and so is every number.<span className="banner-long"> Dashed <span className="assumed-tag">Our guess</span> tags
+          mark what we guessed about your systems.</span></p>}
         <div className="banner-actions">
           <NavLink to="/about" className="button banner-guide">How it works</NavLink>
+          <RollCallButton className="banner-only" />
           <SystemsLink answered={answered} className="button banner-only" />
           <button type="button" className="button banner-only" onClick={() => openFeedback(null)}><Icon name="message" /><span>Feedback</span></button>
         </div>
@@ -133,6 +137,7 @@ function Shell() {
         </Page>
       </main>
       <FeedbackDialog page={page.title} />
+      <RollCallDialog />
     </div>
   );
 }
