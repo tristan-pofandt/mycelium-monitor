@@ -5,7 +5,8 @@ import { Bars, CountUp, Delta, Gauge, Heatmap, KpiTile } from "../charts.jsx";
 import { Icon } from "../icons.jsx";
 import { StatusBadge } from "./Status.jsx";
 import MapPreview from "./MapPreview.jsx";
-import { EmptyState, Skeleton, Tip, rovingKeys, useRowHighlight } from "../ui.jsx";
+import { EmptyState, Skeleton, Tip, rovingKeys, useRowHighlight, useToast } from "../ui.jsx";
+import { useCustomise } from "../customise.jsx";
 
 const greeting = () => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"; };
 const RANGES = [["24h", "24 hours"], ["7d", "7 days"], ["30d", "30 days"]];
@@ -49,7 +50,7 @@ function RequestsCard({ app }) {
   }
   const total = rows.reduce((s, b) => s + b.count, 0);
   return (
-    <section className="panel-card chart-card span-2 ov-chart" aria-labelledby="req-h">
+    <section className="panel-card chart-card" aria-labelledby="req-h">
       <div className="card-head">
         <div>
           <h2 id="req-h">Requests</h2>
@@ -70,6 +71,13 @@ function RequestsCard({ app }) {
     </section>
   );
 }
+
+// The Overview's cards, in the order and widths a new browser starts with. Anyone can change it with Customise; the layout is
+// kept in this browser only (localStorage), so nothing is stored on the server.
+const KEY = "mycelium-overview-layout";
+const DEFAULT = [{ id: "kpis", size: 2 }, { id: "requests", size: 2 }, { id: "uptime", size: 1 }, { id: "map", size: 1 }, { id: "activity", size: 1 }, { id: "heatmap", size: 1 }];
+const loadLayout = () => { try { return JSON.parse(localStorage.getItem(KEY)) || DEFAULT; } catch { return DEFAULT; } };
+const keepLayout = (l) => { try { if (l) localStorage.setItem(KEY, JSON.stringify(l)); else localStorage.removeItem(KEY); } catch { /* private window: lasts this visit */ } };
 
 function RecentActivity({ app }) {
   const { data } = useApi("/api/events", app, { params: { limit: 6 }, refresh: 15 });
@@ -101,9 +109,75 @@ function RecentActivity({ app }) {
 export default function Overview({ app, apps }) {
   const { data: s, error } = useApi("/api/summary", app, { refresh: 30 });
   const { data: week } = useApi("/api/activity", app, { params: { range: "7d", kind: "all" }, refresh: 300 });
+  const [layout, setLayout] = useState(loadLayout);
+  const toast = useToast();
   const shown = app === "all" ? apps : apps.filter((a) => a.slug === app);
   const p = s?.previous;
   const note = insight(s);
+  const save = (next) => { keepLayout(next); setLayout(next || DEFAULT); };
+  const cards = [
+    { id: "kpis", title: "Key figures", sizes: [2], full: true, render: () => (
+      <dl className="kpis" aria-label="Last 24 hours">
+        <KpiTile icon="requests" label="Requests in the last 24 hours" value={<CountUp value={s?.requests} format={fmt.n} />} to={`/${app}/usage`} linkLabel="Open usage"
+          delta={s && <Delta now={s.requests} before={p.requests} />} />
+        <KpiTile icon="errors" label="Errors in the last 24 hours" value={<CountUp value={s?.errors} format={fmt.n} />} to={`/${app}/events`} linkLabel="Open the event log"
+          delta={s && <Delta now={s.errors} before={p.errors} goodWhenUp={false} />} />
+        <KpiTile icon="latency" label="p95 response time" value={<CountUp value={s?.p95_ms} format={fmt.ms} />} to={`/${app}/apis`} linkLabel="Open API details"
+          delta={s && <Delta now={s.p95_ms} before={p.p95_ms} goodWhenUp={false} />} />
+        <KpiTile icon="wallet" label={s ? `Cost today, ${fmt.usd(s.cost_month)} this month` : "Cost today"} value={<CountUp value={s?.cost_today} format={fmt.usd} />}
+          to={`/${app}/costs`} linkLabel="Open costs" delta={s && <Delta now={s.cost_today} before={p.cost_today} goodWhenUp={false} />} />
+      </dl>
+    ) },
+    { id: "requests", title: "Requests", sizes: [2], render: () => <RequestsCard app={app} /> },
+    { id: "uptime", title: "Uptime", sizes: [1, 2], render: () => (
+      <section className="panel-card" aria-labelledby="up-h">
+        <div className="card-head">
+          <div><h2 id="up-h">Uptime</h2><p className="card-sub">Health checks, last 30 days</p></div>
+          {shown.some((a) => a.capabilities.includes("probes")) && <Tip label="Open status and uptime" describe={false}><Link to={`/${app}/status`} className="round-link" aria-label="Open status and uptime"><Icon name="arrow" /></Link></Tip>}
+        </div>
+        <Gauge value={s?.uptime_30d ?? null} label="Uptime over 30 days" sub={s?.uptime_24h != null ? `${s.uptime_24h}% today` : null} />
+        <ul className="app-list" role="list">
+          {shown.map((a) => (
+            <li key={a.slug} className="app-row">
+              <Link to={`/${a.slug}/overview`} className="app-name">{a.name}</Link>
+              <StatusBadge status={a.status} />
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) },
+    { id: "map", title: "Live map", sizes: [1, 2], render: () => (
+      <section className="panel-card" aria-labelledby="mini-h">
+        <div className="card-head">
+          <div><h2 id="mini-h">Live map</h2><p className="card-sub">Reads and writes as they happen</p></div>
+          <Tip label="Open the live map" describe={false}><Link to={`/${app}/map`} className="round-link" aria-label="Open the live map"><Icon name="arrow" /></Link></Tip>
+        </div>
+        <MapPreview app={app} />
+      </section>
+    ) },
+    { id: "activity", title: "Recent activity", sizes: [1, 2], render: () => <RecentActivity app={app} /> },
+    { id: "heatmap", title: "Activity this week", sizes: [1, 2], render: () => (
+      <section className="panel-card" aria-labelledby="heat-h">
+        <div className="card-head"><h2 id="heat-h">Activity this week</h2></div>
+        {week ? <Heatmap buckets={week} title="Events per hour over the last 7 days" /> : <Skeleton height={200} />}
+      </section>
+    ) },
+  ];
+  const board = useCustomise({
+    layout, cards,
+    addNote: "Cards you've hidden from the Overview.",
+    emptyText: "The Overview has no cards. Use Add a card, or Reset to default.",
+    onSave(next) {
+      const prev = layout;
+      save(next);
+      toast({ title: "Overview saved in this browser.", tone: "good", action: { label: "Undo", onClick: () => save(prev) } });
+    },
+    onReset() {
+      const prev = layout;
+      save(null);
+      toast({ title: "Overview is back to the default.", action: { label: "Undo", onClick: () => save(prev) } });
+    },
+  });
   return (
     <>
       <div className="greeting">
@@ -111,54 +185,18 @@ export default function Overview({ app, apps }) {
         <p className={`state-line state-${shown.some((a) => a.status === "down") ? "bad" : "ok"}`}>
           <StatusBadge status={shown.some((a) => a.status === "down") ? "down" : shown.length && shown.every((a) => a.status === "up") ? "up" : null} words={{ up: "Healthy" }} />
           <span>{stateLine(shown)}</span>
+          {board.bar}
         </p>
       </div>
       {error && !s && <p className="notice" role="status">Couldn't load the summary.</p>}
-
-        <dl className="kpis ov-kpis" aria-label="Last 24 hours">
-          <KpiTile icon="requests" label="Requests in the last 24 hours" value={<CountUp value={s?.requests} format={fmt.n} />} to={`/${app}/usage`} linkLabel="Open usage"
-            delta={s && <Delta now={s.requests} before={p.requests} />} />
-          <KpiTile icon="errors" label="Errors in the last 24 hours" value={<CountUp value={s?.errors} format={fmt.n} />} to={`/${app}/events`} linkLabel="Open the event log"
-            delta={s && <Delta now={s.errors} before={p.errors} goodWhenUp={false} />} />
-          <KpiTile icon="latency" label="p95 response time" value={<CountUp value={s?.p95_ms} format={fmt.ms} />} to={`/${app}/apis`} linkLabel="Open API details"
-            delta={s && <Delta now={s.p95_ms} before={p.p95_ms} goodWhenUp={false} />} />
-          <KpiTile icon="wallet" label={s ? `Cost today, ${fmt.usd(s.cost_month)} this month` : "Cost today"} value={<CountUp value={s?.cost_today} format={fmt.usd} />}
-            to={`/${app}/costs`} linkLabel="Open costs" delta={s && <Delta now={s.cost_today} before={p.cost_today} goodWhenUp={false} />} />
-        </dl>
-        <RequestsCard app={app} />
-        <section className="panel-card ov-gauge" aria-labelledby="up-h">
-          <div className="card-head">
-            <div><h2 id="up-h">Uptime</h2><p className="card-sub">Health checks, last 30 days</p></div>
-            {shown.some((a) => a.capabilities.includes("probes")) && <Tip label="Open status and uptime" describe={false}><Link to={`/${app}/status`} className="round-link" aria-label="Open status and uptime"><Icon name="arrow" /></Link></Tip>}
-          </div>
-          <Gauge value={s?.uptime_30d ?? null} label="Uptime over 30 days" sub={s?.uptime_24h != null ? `${s.uptime_24h}% today` : null} />
-          <ul className="app-list" role="list">
-            {shown.map((a) => (
-              <li key={a.slug} className="app-row">
-                <Link to={`/${a.slug}/overview`} className="app-name">{a.name}</Link>
-                <StatusBadge status={a.status} />
-              </li>
-            ))}
-          </ul>
+      {note && !board.editing && (
+        <section className="insight" aria-label="Insight">
+          <span className="insight-icon" aria-hidden="true"><Icon name="spark" /></span>
+          <p>{note}</p>
         </section>
-        <section className="panel-card ov-mini" aria-labelledby="mini-h">
-          <div className="card-head">
-            <div><h2 id="mini-h">Live map</h2><p className="card-sub">Reads and writes as they happen</p></div>
-            <Tip label="Open the live map" describe={false}><Link to={`/${app}/map`} className="round-link" aria-label="Open the live map"><Icon name="arrow" /></Link></Tip>
-          </div>
-          <MapPreview app={app} />
-        </section>
-        <RecentActivity app={app} />
-        <section className="panel-card" aria-labelledby="heat-h">
-          <div className="card-head"><h2 id="heat-h">Activity this week</h2></div>
-          {week ? <Heatmap buckets={week} title="Events per hour over the last 7 days" /> : <Skeleton height={200} />}
-        </section>
-        {note && (
-          <section className="insight ov-insight" aria-label="Insight">
-            <span className="insight-icon" aria-hidden="true"><Icon name="spark" /></span>
-            <p>{note}</p>
-          </section>
-        )}
+      )}
+      {board.slots}
+      {board.extras}
     </>
   );
 }

@@ -358,6 +358,43 @@ main a:not([class]):hover { text-decoration: underline; text-underline-offset: 3
 .row-glow { position: absolute; left: -10px; right: -10px; top: 0; border-radius: 12px; background: var(--bg-pop); opacity: 0; pointer-events: none; transition: translate 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity var(--dur-hover) var(--ease-out); } /* height jumps; only position glides */
 .activity { position: relative; }
 
+/* ── Customisable dashboard (customise.jsx) ── Each card sits in a slot that is the page grid's item and keeps the house width
+   rules. Motion: framer's layout slide (transform) and the tool row's fade (opacity), both off under reduced motion in the component. */
+.page-grid > .cust-slot { display: flex; flex-direction: column; min-width: 0; position: relative; }
+.page-grid > .cust-full, .page-grid > .cust-slot:has(.table-wrap, table, .chart, .plot, .map-card) { grid-column: 1 / -1; }
+.cust-card { display: contents; }
+.cust-slot > .cust-card > * { flex: 1 1 auto; }
+.greeting .cust-open { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; word-break: normal; }
+.cust-edit-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; flex-basis: 100%; }
+.cust-edit-hint { color: var(--text-muted); font-size: 14px; margin-right: auto; }
+.cust-tools { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 4px; margin-bottom: 8px; border-radius: var(--r-field); background: var(--bg-pop); border: 1px solid var(--border); }
+.cust-tools-name { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+.cust-tools-buttons { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.cust-tools .icon-button { min-width: 36px; height: 36px; box-shadow: none; }
+.cust-tools .icon-button:disabled { opacity: 0.4; cursor: default; }
+.cust-tools .button { height: 36px; }
+.icon.flip { rotate: 180deg; }
+.cust-size[aria-pressed="true"] { color: var(--accent-text); background: var(--accent-soft); border-color: var(--accent); }
+.cust-grip { display: inline-grid; place-items: center; width: 36px; height: 36px; flex: none; color: var(--text-muted); cursor: grab; touch-action: none; border-radius: var(--r-field); }
+.cust-grip:hover { color: var(--text); background: var(--bg-card); }
+.cust-slot.is-editing { user-select: none; -webkit-user-select: none; }
+.cust-slot.is-editing > .cust-card > * { opacity: 0.72; }
+.cust-slot.is-editing:active .cust-grip { cursor: grabbing; }
+.cust-slot.is-lifted { cursor: grabbing; } /* the card being dragged: lifted (framer's whileDrag scale) and at full strength */
+.cust-slot.is-lifted > .cust-tools, .cust-slot.is-lifted > .cust-card > * { box-shadow: var(--shadow-card), 0 8px 20px rgba(0, 0, 0, 0.18); }
+.cust-slot.is-lifted > .cust-card > * { opacity: 1; }
+.cust-add-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cust-add-row p { margin: 0; }
+@media (max-width: 520px) {
+  .cust-tools { flex-wrap: wrap; }
+  .cust-tools-buttons { flex-basis: 100%; justify-content: flex-start; }
+}
+
+/* ── Dialogs: the palette box, wider and scrolling inside ── */
+.dialog { width: min(620px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; margin-top: 8vh; }
+.dialog-body { padding: 22px; display: grid; gap: 12px; }
+.dialog-body .card-head { margin-bottom: 0; }
+
 /* ── Responsive ────────────────────────────────────────────────────────── */
 @media (max-width: 1600px) {
   .topbar { grid-template-columns: auto 1fr; }

@@ -1,5 +1,5 @@
 // jsdom has no matchMedia; reduced.js (shared with Reroute) reads it at import.
-globalThis.matchMedia ??= () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
+globalThis.matchMedia ??= () => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }); // framer-motion uses the old pair
 
 // Unmount what each test rendered, so one test never sees another's output.
 import { afterEach } from "vitest";

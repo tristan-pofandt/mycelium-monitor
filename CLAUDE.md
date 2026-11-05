@@ -8,7 +8,7 @@ Read first: `docs/architecture.md` (how it works). Then `docs/roadmap.md` (what'
 
 - `server/`: Flask (`app.py`, `create_app()`). Collectors in `server/collectors/`, API in `server/api/`, tests `server/test_*.py`.
 - `web/`: React + Vite. Panels are listed in `web/src/panels/index.js`.
-- **Design kit** (identical in every Mycelium repo; the reference copy is in `mycelium-ops`): `web/src/tokens.css`, `app.css`, `choreography.js`, `reduced.js`, `motion/*`, `Page.jsx`, `shell.jsx`, `ui.jsx`, `charts.jsx`, `tasks.jsx`, `icons.jsx`, `theme.js`, and `docs/design/`. If you change one, copy the change to the other repos. `choreography.js`, `reduced.js`, `motion/fm.js` and the base tokens also come from Reroute (`C:\dev\reroute`, `apps/plan-b-mvp/web/src/`); keep them in step.
+- **Design kit** (identical in every Mycelium repo; the reference copy is in `mycelium-ops`): `web/src/tokens.css`, `app.css`, `choreography.js`, `reduced.js`, `motion/*`, `Page.jsx`, `shell.jsx`, `ui.jsx`, `charts.jsx`, `tasks.jsx`, `customise.jsx`, `icons.jsx`, `theme.js`, and `docs/design/`. If you change one, copy the change to the other repos. `choreography.js`, `reduced.js`, `motion/fm.js` and the base tokens also come from Reroute (`C:\dev\reroute`, `apps/plan-b-mvp/web/src/`); keep them in step.
 - `emitters/python/`: the emitter and code scan apps use. `hooks/claude/`: the Claude Code hook. `infra/`: Dockerfile and homelab deploy.
 
 ## Commands

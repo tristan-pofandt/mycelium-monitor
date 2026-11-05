@@ -23,10 +23,11 @@ The kit is the set of files below. **Copy them unchanged** from `mycelium-ops/we
 | `ui.jsx` | `Tip`, toasts, `Switch`, `HoldButton`, `EmptyState`, `Skeleton`, `Picker`, `rovingKeys`, `useRowHighlight` |
 | `charts.jsx` | `CountUp`, `Countable`, `Stat`, `Delta`, `KpiTile`, `Bars`, `Gauge`, `Heatmap`, `Table`, `DataTable` |
 | `tasks.jsx` | `useTask`, `TaskChip` |
+| `customise.jsx` | `useCustomise`: the drag-to-rearrange dashboard, plus `moveItem` and `sameLayout` |
 | `icons.jsx` | `Icon`, `Logo` |
 | `theme.js` | Light and dark, remembered in this browser |
 | `test-setup.js` | Test setup (jsdom has no `matchMedia`) |
-| `ui.test.jsx`, `charts.test.jsx`, `motion/pages.test.js` | Tests for the kit |
+| `ui.test.jsx`, `charts.test.jsx`, `customise.test.jsx`, `motion/pages.test.js` | Tests for the kit |
 
 Also copy `web/public/` (icons and `sw.js`, the service worker that caches the app shell only) and write a `manifest.webmanifest` with the product's name, `background_color` and `theme_color` `#08090d`, and the same icons.
 
@@ -136,30 +137,54 @@ export default function App() {
 }
 ```
 
-## 6. A page
+## 6. A home page
 
-A page returns cards and nothing else. It does not animate itself. It does not set its own outer layout.
+A page returns cards and nothing else. It does not animate itself. It does not set its own outer layout. A home or overview page is always customisable: its cards go through `useCustomise` (see `parts.md`). Other pages just return their cards.
 
 ```jsx
+import { useState } from "react";
 import { Bars, KpiTile } from "../charts.jsx";
 import { Icon } from "../icons.jsx";
+import { useToast } from "../ui.jsx";
+import { useCustomise } from "../customise.jsx";
+
+const KEY = "mycelium-commerce-home"; // where this browser keeps the layout
+const DEFAULT = [{ id: "kpis", size: 2 }, { id: "sales", size: 2 }];
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || DEFAULT; } catch { return DEFAULT; } };
+const keep = (l) => { try { if (l) localStorage.setItem(KEY, JSON.stringify(l)); else localStorage.removeItem(KEY); } catch { /* private window */ } };
 
 export default function Home() {
+  const [layout, setLayout] = useState(load);
+  const toast = useToast();
+  const save = (next) => { keep(next); setLayout(next || DEFAULT); };
   const rows = [{ label: "9 AM", values: { sales: 12 } }, { label: "10 AM", values: { sales: 19 } }]; // from your data
-  return (
-    <>
-      <div className="greeting">
-        <h1><span className="rise-mask"><span className="rise">Good morning</span></span></h1>
-        <p className="state-line state-ok"><span className="badge badge-ok"><Icon name="up" />Open</span><span>All stores open. Last order 3 min ago.</span></p>
-      </div>
+  const cards = [
+    { id: "kpis", title: "Key figures", sizes: [2], full: true, render: () => (
       <dl className="kpis" aria-label="Today">
         <KpiTile icon="requests" label="Orders today" value={128} to="/orders" linkLabel="Open orders" />
         {/* three more tiles */}
       </dl>
+    ) },
+    { id: "sales", title: "Sales", sizes: [2], render: () => (
       <section className="card">
         <div className="card-head"><div><h2>Sales</h2><p className="card-sub">Last 24 hours</p></div></div>
         <Bars title="Sales" hideTitle rows={rows} series={[{ key: "sales", label: "Sales", color: "var(--accent)" }]} />
       </section>
+    ) },
+  ];
+  const board = useCustomise({
+    layout, cards,
+    onSave(next) { const prev = layout; save(next); toast({ title: "Home saved.", tone: "good", action: { label: "Undo", onClick: () => save(prev) } }); },
+    onReset() { const prev = layout; save(null); toast({ title: "Home is back to the default.", action: { label: "Undo", onClick: () => save(prev) } }); },
+  });
+  return (
+    <>
+      <div className="greeting">
+        <h1><span className="rise-mask"><span className="rise">Good morning</span></span></h1>
+        <p className="state-line state-ok"><span className="badge badge-ok"><Icon name="up" />Open</span><span>All stores open. Last order 3 min ago.</span>{board.bar}</p>
+      </div>
+      {board.slots}
+      {board.extras}
     </>
   );
 }
