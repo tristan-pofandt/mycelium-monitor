@@ -2,8 +2,9 @@
 import { Fragment, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router";
-import { APPROVALS, MACHINES, PEOPLE, SECURITY_ALERTS, TASKS, certName, dayOffset, fmtAgo, fmtDay, person, qualified, siteName, under, inScope } from "./data.js";
+import { APPROVALS, MACHINES, PEOPLE, ROLES, SECURITY_ALERTS, TASKS, certName, dayOffset, fmtAgo, fmtDay, person, qualified, siteName, under, inScope } from "./data.js";
 import { SourceNote } from "./feedback.jsx";
+import { ALERT_FOCUS, mapHref } from "./plans.js";
 export { SourceNote };
 import { audit, update, useCan, useDemo, usePersona } from "./store.js";
 import { Icon } from "../icons.jsx";
@@ -97,7 +98,7 @@ export function AlertsList({ limit }) {
       {shown.map((a) => (
         <li key={a.id} className="queue-item">
           <p><Sev sev={a.sev} /> <strong>{a.title}</strong></p>
-          <p className="muted small">{siteName(a.site)} · {fmtAgo(a.when)}</p>
+          <p className="muted small">{siteName(a.site)} · {fmtAgo(a.when)}{ALERT_FOCUS[a.id] && <> · <Link to={can("security") ? `/security?map=${ALERT_FOCUS[a.id].site}&focus=${encodeURIComponent(ALERT_FOCUS[a.id].focus)}` : mapHref(ALERT_FOCUS[a.id].site, ALERT_FOCUS[a.id].focus)} className="link">Show on map<span className="sr-only">: {a.title}</span></Link></>}</p>
           <SourceNote ids={[a.source]} />
           <div className="actions">
             {a.id === "s1" && can("revoke") && (
@@ -201,7 +202,7 @@ export function PersonCard({ id, onClose }) {
         <dt>Open tasks</dt><dd>{p.tasks}</dd>
         <dt>Access card</dt><dd>{p.card} · {p.status === "left" ? <span className="late">still active after they left</span> : "active"}</dd>
         <dt>Pay rate</dt><dd>{can("pay") ? "$41.20 an hour (fictional)" : <span className="muted">Hidden for your role</span>}</dd>
-        <dt>Mycelium role</dt><dd>{role || p.role.replace("_", " ")}</dd>
+        <dt>Mycelium role</dt><dd>{role || ROLES.find((r) => r.id === p.role)?.name || p.role}</dd>
         {p.certs.map((c) => <Fragment key={c.name}><dt>{c.name}</dt><dd className="late">expires {fmtDay(c.expires)}</dd></Fragment>)}
       </dl>
       <p className="notice small"><strong>Why can you see this?</strong> {why(persona, viewer, p)}{viewer.id === id && <> <Link to="/my-data" onClick={onClose}>See everything we hold about you</Link></>}</p>

@@ -2,20 +2,45 @@
 // (health and events only, never video), inspections done from a phone, and each physical policy with its evidence.
 // Cyber: device compliance, risky sign-ins and an Essential Eight snapshot (pages/Devices.jsx). Each tab shows only for roles
 // with its permission (security, devices).
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { KpiTile, Table } from "../../charts.jsx";
 import { rovingKeys, useToast } from "../../ui.jsx";
-import { CAMERAS, DOOR_EVENTS, INSPECTIONS, VISITORS, dayOffset, fmtAgo, fmtDay, person, siteName } from "../data.js";
+import { CAMERAS, DOOR_EVENTS, INSPECTIONS, PLACES, VISITORS, dayOffset, fmtAgo, fmtDay, person, siteName } from "../data.js";
 import { PoliciesCard } from "../controls.jsx";
 import { AlertsList, SourceNote, useAlerts } from "../bits.jsx";
 import { update, useCan, useDemo, usePersona } from "../store.js";
 import Cyber from "./Devices.jsx";
 import { PermitsCard } from "../permits.jsx";
+import { SiteMapReplay } from "../sitemap.jsx";
 import { mergePermits, permitFor } from "../permits.js";
 
 // The permit column: Valid, None or Expired at restricted doors, a dash elsewhere. Words, not only colour.
 const PERMIT = { valid: ["Valid", "badge-ok"], none: ["None", "badge-bad"], expired: ["Expired", "badge-warn"] };
+
+// The site map on Security, so roles without Sites (the Security Coordinator) can still see where an alert happened.
+// "Show on map" on an alert opens it here with ?map=<site>&focus=<object>.
+function SecurityMap({ scopeSite }) {
+  const [params, setParams] = useSearchParams();
+  const sites = scopeSite ? [scopeSite] : PLACES.map((x) => x.id);
+  const site = sites.includes(params.get("map")) ? params.get("map") : sites[0];
+  const focus = params.get("map") === site ? params.get("focus") : null;
+  useEffect(() => { if (params.get("map")) document.getElementById("security-map")?.scrollIntoView({ block: "start" }); }, [params]);
+  return (
+    <section className="panel-card span-2" id="security-map" aria-labelledby="security-map-h">
+      <div className="card-head">
+        <div><h2 id="security-map-h">Site map</h2><p className="card-sub">Doors, cameras and alarms as they are now. Replay the last 24 hours to see how an alert happened.</p></div>
+        {sites.length > 1 && (
+          <div role="group" aria-label="Site on the map" className="segmented" onKeyDown={(e) => rovingKeys(e, "button")}>
+            {sites.map((id) => <button key={id} type="button" aria-pressed={site === id} onClick={() => setParams({ map: id })}>{siteName(id)}</button>)}
+          </div>
+        )}
+      </div>
+      <SiteMapReplay key={`${site}|${focus}`} site={site} focus={focus} />
+      <SourceNote ids={["floorplans", "access_control", "cctv", "alarms"]} />
+    </section>
+  );
+}
 
 function Physical() {
   const p = usePersona();
@@ -46,6 +71,7 @@ function Physical() {
         <div className="card-head"><div><h2>Alerts</h2><p className="card-sub">Problems that only show up when systems are joined, such as HR leavers against active cards</p></div></div>
         <AlertsList />
       </section>
+      <SecurityMap scopeSite={site} />
       <PermitsCard />
       <section className="panel-card">
         <h2>Inspections</h2>

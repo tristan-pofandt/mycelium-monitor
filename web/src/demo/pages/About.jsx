@@ -35,6 +35,9 @@ export default function About() {
           <li>On <Link to="/sites?site=ips&view=map">Sites, Ipswich, Map</Link>, jump to "Former employee's card at Gate 2", then press Play to replay the door reads.</li>
           <li>As the Shift Supervisor, read Weather and roads on Home. Then, as the Employee, turn route alerts off: you drop out of the supervisor's list.</li>
           <li>On <Link to="/documents?tab=review">Documents</Link>, see why the Moorvale invoice is flagged, accept a corrected one, and export the tax pack.</li>
+          <li>Press <strong>Roll call</strong> in the header and hold to start a drill at Ipswich. Tick people Safe or Not found as a warden would on a phone; every page's banner stays red until you hold End roll call.</li>
+          <li>Open <Link to="/audit?framework=iso27001">Audit evidence</Link>, ISO 27001. Cancel the leaver's card on Security or run a drill, and watch a gap turn into evidence. Then build the pack an auditor would take away.</li>
+          <li>As the Shift Supervisor, open someone's record on People. Then switch to Employee, Ipswich and open <Link to="/my-data">What we hold about you</Link>: the view is listed, with where each part came from and who can see it.</li>
         </ol>
       </section>
       <section className="panel-card">
@@ -65,6 +68,9 @@ export default function About() {
           <dt>Site map</dt><dd>Reads door events, camera health (never video), alarm states and machine states, all read-only. Stores one floor plan per site, drawn once in setup from a PDF. People per area are counted from card reads, not named.</dd>
           <dt>Weather and roads</dt><dd>Would read the Bureau of Meteorology's public warnings and QLDTraffic's open data (their terms of reuse to be checked). Home postcodes come from HR only for staff who opted in; addresses are never read. The demo fetches nothing.</dd>
           <dt>Documents</dt><dd>Reads only nominated locations (an accounts payable mailbox, one SharePoint library, a scanned-receipts folder), never whole drives. Extraction runs in your own tenant. Stores the extracted fields, review decisions and a link to each file. Never pays, never changes the finance system, never lodges anything.</dd>
+          <dt>Roll call</dt><dd>Reads door events, visitor sign-ins, the roster and live permits. It never opens doors; a real roll call would also push to phones and floor screens. Stores the ticks while it runs and a report (site, times, who wasn't accounted for) in the audit trail.</dd>
+          <dt>Audit evidence</dt><dd>The compliance plug-in reads, read-only, what Mycelium already collects: door logs, inspections, permits, roll calls, training, device state, approvals and the audit trail. It stores only which packs were built and guest-auditor access with its expiry. Real packs would be signed and checked against the tamper-evident log.</dd>
+          <dt>Staff data</dt><dd>Everyone can see what Mycelium holds about them, where it came from, who can see it and how long it's kept, and who opened their record. Nothing new is collected; correction requests go to HR.</dd>
           <dt>AI</dt><dd>Off unless you turn it on. Answers cite their sources, and emails or documents can never make it take an action.</dd>
           <dt>This demo</dt><dd>Runs on Tristan's own server with made-up data. Feedback and answers are stored there, only Tristan reads the feedback, and names are optional.</dd>
         </dl>

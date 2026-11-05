@@ -284,3 +284,6 @@ select.input { padding-right: 28px; }
 .it-facts { grid-template-columns: max-content minmax(0, 1fr); gap: 10px 20px; max-width: 900px; }
 .it-facts dt { font-weight: 600; color: var(--text); }
 .table-more { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-top: 12px; }
+
+/* Security: the map card a "Show on map" link jumps to sits below the sticky header */
+#security-map { scroll-margin-top: 150px; }
