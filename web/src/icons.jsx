@@ -39,6 +39,16 @@ const PATHS = {
   user: <><circle cx="8" cy="5.5" r="2.75" /><path d="M2.75 13.5c.6-2.4 2.7-4 5.25-4s4.65 1.6 5.25 4" /></>,
   users: <><circle cx="6" cy="5.75" r="2.25" /><path d="M1.75 13c.5-2 2.2-3.25 4.25-3.25S9.75 11 10.25 13" /><circle cx="11.25" cy="5.25" r="1.75" /><path d="M11 8.75c1.6 0 2.85 1 3.25 2.75" /></>,
   checklist: <><path d="m2.5 4.25 1.25 1.25 2-2.25M2.5 10.25l1.25 1.25 2-2.25" /><path d="M8 4.5h5.5M8 10.5h5.5" /></>,
+  roster: <><rect x="1.75" y="2.75" width="12.5" height="10.5" rx="2" /><path d="M1.75 6.25h12.5M6 6.25v7M10 6.25v7M5 1.5v2.5M11 1.5v2.5" /></>,
+  doc: <><path d="M4 1.75h5.25L12 4.5v9.75H4Z" /><path d="M9 1.75V4.75h3M6 8h4M6 10.75h4" /></>,
+  siren: <><path d="M4.25 12.25V8.5a3.75 3.75 0 0 1 7.5 0v3.75" /><path d="M2.75 12.25h10.5v2H2.75ZM8 1.5v1.5M2.4 3.4l1 1M13.6 3.4l-1 1" /></>,
+  tv: <><rect x="1.75" y="2.75" width="12.5" height="8.5" rx="1.75" /><path d="M5.5 14h5M8 11.25V14" /></>,
+  evidence: <><path d="M1.75 4.25a1 1 0 0 1 1-1h3.5l1.5 1.5h5.5a1 1 0 0 1 1 1v6.75a1 1 0 0 1-1 1H2.75a1 1 0 0 1-1-1Z" /><path d="m5.75 9.25 1.5 1.5 3-3" /></>,
+  weather: <><path d="M4.5 9.75a2.75 2.75 0 0 1 .4-5.47 3.5 3.5 0 0 1 6.75.97 2.25 2.25 0 0 1-.4 4.5Z" /><path d="M5.5 12.25 5 14M8.25 12.25 7.75 14M11 12.25l-.5 1.75" /></>,
+  permit: <><path d="M2.25 2.25h5.5l6 6-5.5 5.5-6-6Z" /><circle cx="5.25" cy="5.25" r="1" /></>,
+  grip: <><circle cx="6" cy="4" r=".6" fill="currentColor" /><circle cx="10" cy="4" r=".6" fill="currentColor" /><circle cx="6" cy="8" r=".6" fill="currentColor" /><circle cx="10" cy="8" r=".6" fill="currentColor" /><circle cx="6" cy="12" r=".6" fill="currentColor" /><circle cx="10" cy="12" r=".6" fill="currentColor" /></>,
+  play: <path d="M5 3.25v9.5l7.5-4.75Z" />,
+  pause: <path d="M5.5 3.25v9.5M10.5 3.25v9.5" />,
   empty: <><path d="M2.25 9.25 4 3.75h8l1.75 5.5v3a1.25 1.25 0 0 1-1.25 1.25h-9A1.25 1.25 0 0 1 2.25 12.25Z" /><path d="M2.25 9.25h3.5l.75 1.5h3l.75-1.5h3.5" /></>,
 };
 

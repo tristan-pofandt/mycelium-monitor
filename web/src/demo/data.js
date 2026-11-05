@@ -109,6 +109,7 @@ export const ROLES = [
   { id: "security", name: "Security Officer", scope: "All sites, security only" },
   { id: "hr", name: "HR", scope: "All sites, people only" },
   { id: "it", name: "IT Administrator", scope: "All sites, systems and devices" },
+  { id: "auditor", name: "Auditor (guest, read-only)", scope: "Audit evidence only, for a set time" },
 ];
 export const CAPS = [
   { id: "sites", label: "See site comparison and KPIs", group: "Operations" },
@@ -125,16 +126,25 @@ export const CAPS = [
   { id: "roles", label: "Manage roles and permissions", group: "Admin" },
   { id: "assistant", label: "Use the AI assistant", group: "AI" },
   { id: "export", label: "Export data", group: "Admin" },
+  // Added 2026-11-05 (docs/demo-features-plan.md)
+  { id: "roster", label: "Plan rosters", group: "People" },
+  { id: "permits", label: "Issue and close permits to work", group: "Safety" },
+  { id: "emergency", label: "Run a roll call", group: "Safety" },
+  { id: "finance", label: "See invoices, receipts and tax packs", group: "Money" },
+  { id: "audit", label: "See and export audit evidence", group: "Admin" },
+  { id: "tv", label: "Set up floor screens", group: "Operations" },
+  { id: "layouts", label: "Set each role's default Home", group: "Admin" },
 ];
 export const DEFAULT_GRANTS = {
-  gm: CAPS.map((c) => c.id).filter((c) => c !== "pay"),
-  site_manager: ["sites", "people", "approveLeave", "assign", "events", "lock", "approveEvents", "security", "devices", "assistant", "export"],
+  gm: CAPS.map((c) => c.id).filter((c) => !["pay", "permits"].includes(c)),
+  site_manager: ["sites", "people", "approveLeave", "assign", "events", "lock", "approveEvents", "security", "devices", "assistant", "export", "roster", "permits", "emergency", "audit", "tv"],
   manager: ["people", "approveLeave", "assign", "events", "assistant"],
-  supervisor: ["people", "approveLeave", "assign", "events", "assistant"],
+  supervisor: ["people", "approveLeave", "assign", "events", "assistant", "roster", "permits", "emergency"],
   employee: ["assistant"],
-  security: ["people", "security", "revoke", "assistant", "export"],
+  security: ["people", "security", "revoke", "assistant", "export", "emergency", "audit"],
   hr: ["people", "pay", "approveLeave", "export"],
-  it: ["people", "devices", "roles", "export", "assistant"],
+  it: ["people", "devices", "roles", "export", "assistant", "audit", "layouts"],
+  auditor: ["audit"],
 };
 
 const ipsSm = PEOPLE.find((p) => p.site === "ips" && p.role === "site_manager");
@@ -303,3 +313,71 @@ export const ESSENTIAL_EIGHT = [
   ["Application control", 1], ["Patch applications", 2], ["Configure Office macros", 2], ["User application hardening", 1],
   ["Restrict admin privileges", 2], ["Patch operating systems", 2], ["Multi-factor authentication", 3], ["Regular backups", 2],
 ];
+
+// ── Machines and skills (added 2026-11-05, docs/demo-features-plan.md) ──
+// Generated from their own seed, after everything above, so the people, cards and door events reviewers have seen stay the same.
+const rand2 = rng(20261105);
+const chance = (p) => rand2() < p;
+const int2 = (lo, hi) => lo + Math.floor(rand2() * (hi - lo + 1));
+
+export const CERTS = [
+  { id: "press", name: "Press line operation" }, { id: "brake_test", name: "Brake test rig" }, { id: "cnc", name: "CNC machining" },
+  { id: "foundry", name: "Foundry pour" }, { id: "crane", name: "Crane (overhead and gantry)" }, { id: "forklift", name: "Forklift licence" },
+  { id: "hotwork", name: "Hot work" }, { id: "confined", name: "Confined space entry" }, { id: "isolation", name: "Isolation and lockout" },
+  { id: "first_aid", name: "First aid" }, { id: "warden", name: "Fire warden" },
+];
+export const certName = (id) => CERTS.find((c) => c.id === id)?.name || id;
+
+// perShift: certified people needed on every shift the machine runs (all the site's shifts unless `shifts` says otherwise). state comes from plant data (running, down, maintenance).
+export const MACHINES = [
+  { id: "acr-rig", site: "acr", name: "Brake test rig", needs: "brake_test", perShift: 2, state: "running" },
+  { id: "acr-crane", site: "acr", name: "Overhead crane CR-01", needs: "crane", perShift: 1, state: "running", shifts: ["Day"] },
+  { id: "acr-fork", site: "acr", name: "Forklifts, dispatch", needs: "forklift", perShift: 1, state: "running" },
+  { id: "ips-press1", site: "ips", name: "Press line 1", needs: "press", perShift: 3, state: "running" },
+  { id: "ips-press2", site: "ips", name: "Press line 2", needs: "press", perShift: 3, state: "down" },
+  { id: "ips-weld", site: "ips", name: "Welding cell", needs: "hotwork", perShift: 2, state: "running" },
+  { id: "ips-fork", site: "ips", name: "Forklifts, stores", needs: "forklift", perShift: 1, state: "running" },
+  { id: "twb-cnc", site: "twb", name: "CNC cells 1 to 4", needs: "cnc", perShift: 3, state: "running" },
+  { id: "twb-pour", site: "twb", name: "Foundry pour line", needs: "foundry", perShift: 3, state: "running" },
+  { id: "twb-crane", site: "twb", name: "Crane CR-04", needs: "crane", perShift: 1, state: "maintenance" },
+  { id: "tsv-crane", site: "tsv", name: "Overhaul bay crane", needs: "crane", perShift: 1, state: "running" },
+  { id: "tsv-fork", site: "tsv", name: "Forklift, yard", needs: "forklift", perShift: 1, state: "running" },
+];
+
+// What each job tends to hold: [cert, chance].
+const SKILL_ODDS = {
+  "Assembly operator": [["press", 0.35], ["forklift", 0.2]], "Brake fitter": [["brake_test", 0.3], ["forklift", 0.15]], "Test technician": [["brake_test", 0.85]],
+  "Machine operator": [["press", 0.75], ["forklift", 0.3]], Welder: [["hotwork", 0.95], ["confined", 0.15]], "CNC machinist": [["cnc", 0.9]],
+  "Foundry operator": [["foundry", 0.85], ["hotwork", 0.5], ["crane", 0.12]], Fettler: [["hotwork", 0.35], ["foundry", 0.2]],
+  "Service technician": [["forklift", 0.6], ["crane", 0.35], ["isolation", 0.4]], "Overhaul fitter": [["crane", 0.4], ["isolation", 0.6], ["hotwork", 0.3]],
+  "Maintenance fitter": [["isolation", 0.9], ["confined", 0.45], ["crane", 0.3], ["hotwork", 0.4]], Electrician: [["isolation", 0.95], ["confined", 0.35]],
+  "WHS Advisor": [["first_aid", 1], ["warden", 1], ["confined", 0.5]],
+};
+const OLD_CERT = { "Forklift licence": "forklift", "First aid": "first_aid", "Confined space": "confined" };
+
+// skills: [{ cert, status: "certified" | "training", expires }]. The older certs list (expiring soon) is folded in.
+for (const p of PEOPLE) {
+  const odds = p.role === "supervisor" ? [["first_aid", 0.7], ["warden", 0.8], ["isolation", 0.5]] : SKILL_ODDS[p.title] || [];
+  const skills = odds.filter(([, odd]) => chance(odd)).map(([cert]) => (chance(0.07)
+    ? { cert, status: "training", expires: null }
+    : { cert, status: "certified", expires: dayOffset(int2(35, 720)) }));
+  for (const c of p.certs) {
+    const id = OLD_CERT[c.name];
+    const have = skills.find((s) => s.cert === id);
+    if (have) Object.assign(have, { status: "certified", expires: c.expires }); else skills.push({ cert: id, status: "certified", expires: c.expires });
+  }
+  if (p.role === "employee" && p.site !== "hq" && chance(0.12)) skills.push({ cert: "first_aid", status: "certified", expires: dayOffset(int2(35, 720)) });
+  p.skills = skills;
+}
+
+// The gap the demo points at: Toowoomba's afternoon shift has one certified crane operator, and their ticket runs out in two
+// days, so from the day after no one on that shift can run crane CR-04.
+{
+  const aft = PEOPLE.filter((p) => p.site === "twb" && p.shift === "Afternoon" && p.status === "active");
+  aft.forEach((p) => { p.skills = p.skills.filter((s) => s.cert !== "crane"); });
+  const keeper = aft.find((p) => p.title === "Foundry operator") || aft[0];
+  keeper.skills.push({ cert: "crane", status: "certified", expires: dayOffset(2) });
+}
+
+// Is this person certified for this cert on this day (not in training, not expired)?
+export const qualified = (p, cert, at = TODAY) => (p.skills || []).some((s) => s.cert === cert && s.status === "certified" && (!s.expires || s.expires >= at));

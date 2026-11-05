@@ -21,6 +21,11 @@ import Roles from "./pages/Roles.jsx";
 import Setup from "./pages/Setup.jsx";
 import Systems from "./pages/Systems.jsx";
 import About from "./pages/About.jsx";
+import Rosters from "./pages/Rosters.jsx";
+import Documents from "./pages/Documents.jsx";
+import Audit from "./pages/Audit.jsx";
+import Emergency from "./pages/Emergency.jsx";
+import MyData from "./pages/MyData.jsx";
 
 // cap: the permission (or any of several) a persona needs to see the page (Roles and permissions); pages without one are for everyone.
 export const PAGES = [
@@ -28,17 +33,22 @@ export const PAGES = [
   { id: "sites", title: "Sites", short: "Sites", icon: "status", cap: "sites", component: Sites },
   { id: "people", title: "People", short: "People", icon: "map", cap: "people", component: People },
   { id: "work", title: "Work and approvals", short: "Work", icon: "check", component: Work },
+  { id: "rosters", title: "Rosters", short: "Rosters", icon: "roster", cap: "roster", component: Rosters },
   { id: "calendar", title: "Calendar", short: "Calendar", icon: "clock", component: Calendar },
   { id: "security", title: "Security", short: "Security", icon: "access", cap: ["security", "devices"], component: Security },
+  { id: "documents", title: "Documents and tax", short: "Documents", icon: "doc", cap: "finance", component: Documents },
   { id: "assistant", title: "Assistant", short: "Assistant", icon: "spark", cap: "assistant", component: Assistant },
   { id: "roles", title: "Roles and permissions", short: "Roles", icon: "users", cap: "roles", component: Roles, tool: true },
   { id: "setup", title: "Setup wizard", short: "Setup", icon: "checklist", cap: "roles", component: Setup, tool: true },
+  { id: "audit", title: "Audit evidence", short: "Audit", icon: "evidence", cap: "audit", component: Audit, tool: true },
+  { id: "emergency", title: "Roll call", icon: "siren", cap: "emergency", component: Emergency, hidden: true },
+  { id: "my-data", title: "What we hold about you", icon: "user", component: MyData, hidden: true },
   { id: "systems", title: "Your systems", component: Systems, hidden: true },
   { id: "about", title: "About this demo", component: About, hidden: true },
 ];
 export const canSee = (page, persona, grants) => !page.cap || [page.cap].flat().some((c) => (grants[persona] || []).includes(c));
 
-// "Your systems 3/31": in the header on wide screens, in the banner on phones (where the header has no room for labels).
+// "Your systems 3/40": in the header on wide screens, in the banner on phones (where the header has no room for labels).
 function SystemsLink({ answered, className }) {
   return (
     <NavLink to="/systems" className={className} aria-label={`Your systems: ${answered} of ${ASSUMPTIONS.length} answered`}>
