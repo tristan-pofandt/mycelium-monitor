@@ -1,0 +1,39 @@
+/* Customisable Home (pages/Home.jsx, homecards.jsx). Each card sits in a slot that is the page grid's item; the slot follows
+   the house width rules (app.css / demo.css) that used to apply to the card itself. Motion: framer's layout slide (transform)
+   and the tool row's fade (opacity), both off under reduced motion in the component. */
+.page-grid > .home-slot { display: flex; flex-direction: column; min-width: 0; position: relative; }
+.page-grid > .home-full, .page-grid > .home-slot:has(.table-wrap, .chart, .week, .board, .team-map) { grid-column: 1 / -1; }
+.home-card { display: contents; }
+.home-slot > .home-card > * { flex: 1 1 auto; }
+
+.greeting .home-customise { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; word-break: normal; }
+.home-edit-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; flex-basis: 100%; }
+.home-edit-hint { color: var(--text-muted); font-size: 14px; margin-right: auto; }
+
+.home-tools { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 4px; margin-bottom: 8px; border-radius: var(--r-field);
+  background: var(--bg-pop); border: 1px solid var(--border); }
+.home-tools-name { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+.home-tools-buttons { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.home-tools .icon-button { min-width: 36px; height: 36px; box-shadow: none; }
+.home-tools .icon-button:disabled { opacity: 0.4; cursor: default; }
+.home-tools .button { height: 36px; }
+.home-tools .flip, .home-default-list .flip { rotate: 180deg; }
+.home-default-list { padding: 0; margin: 12px 0; list-style: none; }
+.home-default-list .home-tools-buttons { flex: none; flex-wrap: nowrap; }
+.home-default-list .icon-button { min-width: 36px; height: 36px; box-shadow: none; }
+.home-default-list .icon-button:disabled { opacity: 0.4; cursor: default; }
+.home-default-list .button { height: 36px; }
+.home-size[aria-pressed="true"] { color: var(--accent-text); background: var(--accent-soft); border-color: var(--accent); }
+.home-grip { display: inline-grid; place-items: center; width: 36px; height: 36px; flex: none; color: var(--text-muted); cursor: grab; touch-action: none; border-radius: var(--r-field); }
+.home-grip:hover { color: var(--text); background: var(--bg-card); }
+.home-slot.is-editing { user-select: none; -webkit-user-select: none; }
+.home-slot.is-editing > .home-card > * { opacity: 0.72; }
+.home-slot.is-editing:active .home-grip { cursor: grabbing; }
+
+.home-add-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.home-add-row p { margin: 0; }
+
+@media (max-width: 520px) {
+  .home-tools { flex-wrap: wrap; }
+  .home-tools-buttons { flex-basis: 100%; justify-content: flex-start; }
+}

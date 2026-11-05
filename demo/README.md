@@ -56,6 +56,12 @@ review. It runs on a fictional company, **Brolga Industries**: 4 Queensland site
   - **What we hold about you** (`/my-data`, everyone): each part of a person's record with its source, who can see it (from
     the current grants) and how long it's kept; who opened their record; what is never collected; correction requests to
     HR; a JSON download.
+  - **Customisable Home:** Customise reorders (drag by the handle or Move up and Move down), resizes, hides and adds cards.
+    Only cards the role's permissions allow are offered, and they drop out if the permission is taken away. Admins (the
+    `layouts` permission) set each role's default Home in Roles and permissions. The six default homes are unchanged.
+  - **TV mode** (`/tv?site=ips`, opened from a site on Sites with the `tv` permission): a full-screen floor screen outside the
+    app shell, rotating every 15 s through safety days, output against target, shift coverage, machine states, weather,
+    permits by area and an announcement. Nothing personal. A roll call takes over every floor screen at that site.
   - Seven new permissions (roster, permits, emergency, finance, audit, tv, layouts). Browsers that saved the old grants get
     the new ones on their next visit (`store.js`, `seenCaps`).
 - **Safety cues:** destructive security actions are hold-to-confirm, decisions and actions toast with Undo, and Roles and

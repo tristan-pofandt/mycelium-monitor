@@ -37,6 +37,8 @@ export default function About() {
           <li>On <Link to="/documents?tab=review">Documents</Link>, see why the Moorvale invoice is flagged, accept a corrected one, and export the tax pack.</li>
           <li>Press <strong>Roll call</strong> in the header and hold to start a drill at Ipswich. Tick people Safe or Not found as a warden would on a phone; every page's banner stays red until you hold End roll call.</li>
           <li>Open <Link to="/audit?framework=iso27001">Audit evidence</Link>, ISO 27001. Cancel the leaver's card on Security or run a drill, and watch a gap turn into evidence. Then build the pack an auditor would take away.</li>
+          <li>Press <strong>Customise</strong> on <Link to="/">Home</Link>: drag a card by its handle (or use Move up and Move down), make it wide, hide it or add one. As GM or IT, set a role's default Home in Roles and permissions.</li>
+          <li>On Sites, open a site and choose <strong>Open TV mode</strong>: pick the screens, type an announcement and open the floor screen. Start a roll-call drill in this tab and watch the TV switch to the evacuation screen.</li>
           <li>As the Shift Supervisor, open someone's record on People. Then switch to Employee, Ipswich and open <Link to="/my-data">What we hold about you</Link>: the view is listed, with where each part came from and who can see it.</li>
         </ol>
       </section>
@@ -71,6 +73,8 @@ export default function About() {
           <dt>Roll call</dt><dd>Reads door events, visitor sign-ins, the roster and live permits. It never opens doors; a real roll call would also push to phones and floor screens. Stores the ticks while it runs and a report (site, times, who wasn't accounted for) in the audit trail.</dd>
           <dt>Audit evidence</dt><dd>The compliance plug-in reads, read-only, what Mycelium already collects: door logs, inspections, permits, roll calls, training, device state, approvals and the audit trail. It stores only which packs were built and guest-auditor access with its expiry. Real packs would be signed and checked against the tamper-evident log.</dd>
           <dt>Staff data</dt><dd>Everyone can see what Mycelium holds about them, where it came from, who can see it and how long it's kept, and who opened their record. Nothing new is collected; correction requests go to HR.</dd>
+          <dt>Floor screens</dt><dd>A browser on a wall TV opening one address per site. Read-only, the same data as the dashboard, and only counts, states and dates: never names, cards or door events. Stores the screen list and the announcement.</dd>
+          <dt>Home layouts</dt><dd>No new system. Stores each person's card order and widths, and each role's default layout, in Mycelium's own settings.</dd>
           <dt>AI</dt><dd>Off unless you turn it on. Answers cite their sources, and emails or documents can never make it take an action.</dd>
           <dt>This demo</dt><dd>Runs on Tristan's own server with made-up data. Feedback and answers are stored there, only Tristan reads the feedback, and names are optional.</dd>
         </dl>

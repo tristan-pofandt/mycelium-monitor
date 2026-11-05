@@ -3,11 +3,74 @@
 import { Fragment, useState } from "react";
 import { Link } from "react-router";
 import { HoldButton, useToast } from "../../ui.jsx";
-import { CAPS, DEFAULT_GRANTS, PEOPLE, ROLES, SITES, dayOffset, fmtDay, inScope, person, siteName } from "../data.js";
+import { CAPS, DEFAULT_GRANTS, PEOPLE, PERSONAS, ROLES, SITES, dayOffset, fmtDay, inScope, person, siteName } from "../data.js";
 import { FRAMEWORKS, frameworkName } from "../controls.js";
 import { PersonButton, PersonSearch, SourceNote } from "../bits.jsx";
 import { Assumed } from "../feedback.jsx";
-import { audit, update, useDemo, usePersona } from "../store.js";
+import { audit, update, useCan, useDemo, usePersona } from "../store.js";
+import { addable, cardById, layoutFor, move, sameLayout, titleOf } from "../layout.js";
+import { DEFAULT_LAYOUTS } from "../homecards.jsx";
+import { Icon } from "../../icons.jsx";
+
+// Default Home for a role (feature 10): what someone in the role sees until they customise. People who customised keep theirs.
+function DefaultHome() {
+  const toast = useToast();
+  const { grants, roleLayouts } = useDemo();
+  const [role, setRole] = useState("supervisor");
+  const current = layoutFor(role, {}, grants, roleLayouts);
+  const [draft, setDraft] = useState(null);
+  const [said, setSaid] = useState("");
+  const list = draft || current;
+  const [pick, setPick] = useState("");
+  const offer = addable(role, list, grants[role] || []);
+  const name = (id) => titleOf(cardById(id), role);
+  const edit = (next, text) => { setDraft(next); setSaid(text); };
+  const save = () => {
+    const prev = roleLayouts[role];
+    update((s) => ({ roleLayouts: { ...s.roleLayouts, [role]: list } }));
+    audit(`set the default Home for ${roleName(role)} (${list.length} cards)`);
+    toast({ title: `New default Home for ${roleName(role)}. People who customised their own keep it.`, tone: "good", action: { label: "Undo", onClick: () => {
+      update((s) => { const x = { ...s.roleLayouts }; if (prev) x[role] = prev; else delete x[role]; return { roleLayouts: x }; });
+      audit(`undid the default Home change for ${roleName(role)}`);
+    } } });
+    setDraft(null);
+  };
+  const restore = () => {
+    update((s) => { const x = { ...s.roleLayouts }; delete x[role]; return { roleLayouts: x }; });
+    audit(`put the default Home for ${roleName(role)} back to Mycelium's`);
+    toast({ title: `${roleName(role)} is back to Mycelium's default Home.` });
+    setDraft(null);
+  };
+  return (
+    <section className="panel-card" aria-labelledby="dh-h">
+      <div className="card-head"><div><h2 id="dh-h">Default Home for this role</h2><p className="card-sub">What people in the role see on Home until they customise it. People who customised keep theirs.</p></div></div>
+      <label className="field">Role <select className="input" value={role} onChange={(e) => { setRole(e.target.value); setDraft(null); setPick(""); }}>
+        {PERSONAS.map((p) => <option key={p.id} value={p.id}>{roleName(p.id)}</option>)}</select></label>
+      <ol className="queue home-default-list" role="list">{list.map((x, i) => (
+        <li key={x.id} className="queue-item home-add-row">
+          <p><span className="muted small">{i + 1}.</span> <strong>{name(x.id)}</strong>{x.size === 2 && !cardById(x.id).full ? <span className="muted small"> · wide</span> : ""}</p>
+          <span className="home-tools-buttons" role="group" aria-label={`${name(x.id)}, position ${i + 1} of ${list.length}`}>
+            <button type="button" className="icon-button" disabled={i === 0} aria-label="Move up" onClick={() => edit(move(list, i, i - 1), `${name(x.id)} moved to position ${i} of ${list.length}`)}><Icon name="chevron" className="flip" /></button>
+            <button type="button" className="icon-button" disabled={i === list.length - 1} aria-label="Move down" onClick={() => edit(move(list, i, i + 1), `${name(x.id)} moved to position ${i + 2} of ${list.length}`)}><Icon name="chevron" /></button>
+            <button type="button" className="button" onClick={() => edit(list.filter((y) => y.id !== x.id), `${name(x.id)} removed`)}>Remove</button>
+          </span>
+        </li>
+      ))}</ol>
+      {offer.length > 0 && (
+        <div className="toolbar">
+          <label>Add a card <select className="input" value={pick} onChange={(e) => setPick(e.target.value)}><option value="">Choose…</option>{offer.map((c) => <option key={c.id} value={c.id}>{titleOf(c, role)}</option>)}</select></label>
+          <button type="button" className="button" disabled={!pick} onClick={() => { edit([...list, { id: pick, size: cardById(pick).sizes[0] }], `${name(pick)} added at position ${list.length + 1}`); setPick(""); }}>Add</button>
+        </div>
+      )}
+      <div className="actions">
+        <button type="button" className="button button-primary" disabled={!draft || sameLayout(draft, current)} onClick={save}>Save default</button>
+        {roleLayouts[role] && <button type="button" className="button" onClick={restore}>Back to Mycelium's default</button>}
+      </div>
+      <p className="muted small">Only cards the role's permissions allow can be added. {sameLayout(current, DEFAULT_LAYOUTS[role]) ? "This is Mycelium's built-in default." : "Changed from Mycelium's built-in default."}</p>
+      <p className="sr-only" aria-live="polite">{said}</p>
+    </section>
+  );
+}
 
 const GROUPS = [["SG-QLD-Ops-Leadership", "gm"], ["SG-QLD-SiteManagers", "site_manager"], ["SG-QLD-Supervisors", "supervisor"], ["SG-QLD-Security", "security"],
   ["SG-QLD-HR", "hr"], ["SG-IT-Admins", "it"], ["All QLD staff", "employee"]];
@@ -155,6 +218,7 @@ function AuditTrail() {
 export default function Roles() {
   const p = usePersona();
   const toast = useToast();
+  const can = useCan();
   const { grants } = useDemo();
   const editable = p.id === "gm" || p.id === "it";
   const set = (r, cap, on) => update((s) => ({ grants: { ...s.grants, [r]: on ? [...s.grants[r], cap] : s.grants[r].filter((c) => c !== cap) } }));
@@ -208,6 +272,7 @@ export default function Roles() {
         <Delegation />
       </section>
       <AuditorAccess editable={editable} />
+      {can("layouts") && <DefaultHome />}
       <AuditTrail />
       <section className="panel-card">
         <h2>Who decides what</h2>
