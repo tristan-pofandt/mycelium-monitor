@@ -2,8 +2,9 @@
 // a different role, and handing your approvals to someone else for a set time.
 import { Fragment, useState } from "react";
 import { Link } from "react-router";
-import { useToast } from "../../ui.jsx";
-import { CAPS, DEFAULT_GRANTS, PEOPLE, ROLES, dayOffset, fmtDay, inScope, person, siteName } from "../data.js";
+import { HoldButton, useToast } from "../../ui.jsx";
+import { CAPS, DEFAULT_GRANTS, PEOPLE, ROLES, SITES, dayOffset, fmtDay, inScope, person, siteName } from "../data.js";
+import { FRAMEWORKS, frameworkName } from "../controls.js";
 import { PersonButton, PersonSearch, SourceNote } from "../bits.jsx";
 import { Assumed } from "../feedback.jsx";
 import { audit, update, useDemo, usePersona } from "../store.js";
@@ -43,6 +44,54 @@ function Delegation() {
         </li>
       ))}</ul>}
     </>
+  );
+}
+
+// A guest auditor: the read-only Auditor role (audit evidence only, no exports) for some sites and one framework, ending by itself.
+function AuditorAccess({ editable }) {
+  const toast = useToast();
+  const list = useDemo((s) => s.auditors);
+  const [name, setName] = useState(""), [firm, setFirm] = useState(""), [site, setSite] = useState("all"), [fw, setFw] = useState(FRAMEWORKS[0].id), [days, setDays] = useState(5);
+  const ok = name.trim() && firm.trim();
+  const give = () => {
+    const a = { id: Date.now(), name: name.trim(), firm: firm.trim(), sites: site === "all" ? null : [site], framework: fw, until: dayOffset(Number(days)).toISOString() };
+    update((s) => ({ auditors: [...s.auditors, a] }));
+    audit(`gave ${a.name} (${a.firm}) the ${roleName("auditor")} role for ${frameworkName(fw)} evidence, ${site === "all" ? "all sites" : siteName(site)}, until ${fmtDay(new Date(a.until))}`);
+    toast({ title: `${a.name} can read the ${frameworkName(fw)} evidence until ${fmtDay(new Date(a.until))}. It ends by itself.`, tone: "good" });
+    setName(""); setFirm("");
+  };
+  const end = (a) => {
+    update((s) => ({ auditors: s.auditors.filter((x) => x.id !== a.id) }));
+    audit(`ended ${a.name}'s auditor access`);
+    toast({ title: `${a.name}'s access has ended. Logged.` });
+  };
+  return (
+    <section className="panel-card">
+      <h2>Give an auditor read-only access</h2>
+      <p className="muted small">For a visiting auditor: the {roleName("auditor")} role, which sees the audit evidence for the sites and framework you pick, can't export or change anything, and ends by itself.</p>
+      {editable ? (
+        <div className="form-grid">
+          <label className="field">Name <input className="input" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} /></label>
+          <label className="field">Firm <input className="input" value={firm} maxLength={60} placeholder="Certification body" onChange={(e) => setFirm(e.target.value)} /></label>
+          <div className="toolbar">
+            <label>Sites <select className="input" value={site} onChange={(e) => setSite(e.target.value)}><option value="all">All sites</option>{SITES.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+            <label>Framework <select className="input" value={fw} onChange={(e) => setFw(e.target.value)}>{FRAMEWORKS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select></label>
+            <label>For <select className="input" value={days} onChange={(e) => setDays(e.target.value)}>{[1, 3, 5, 10].map((d) => <option key={d} value={d}>{d} day{d === 1 ? "" : "s"}</option>)}</select></label>
+            <button type="button" className="button button-primary" disabled={!ok} onClick={give}>Give access</button>
+          </div>
+        </div>
+      ) : <p className="muted small">Only the GM and IT can give guest access.</p>}
+      {list.length > 0 && <ul className="queue" role="list">{list.map((a) => {
+        const live = new Date(a.until) > new Date();
+        return (
+          <li key={a.id} className={`queue-item ${live ? "" : "is-done"}`}>
+            <p><strong>{a.name}</strong>, {a.firm}: {frameworkName(a.framework)} evidence, {a.sites ? a.sites.map(siteName).join(", ") : "all sites"}</p>
+            <p className="muted small">{live ? `Until ${fmtDay(new Date(a.until))}, then it ends by itself.` : `Ended ${fmtDay(new Date(a.until))}.`} Read-only; every page they open is logged.</p>
+            {live && editable && <HoldButton className="button-danger" onConfirm={() => end(a)}>Hold to end access</HoldButton>}
+          </li>
+        );
+      })}</ul>}
+    </section>
   );
 }
 
@@ -158,6 +207,7 @@ export default function Roles() {
         <p className="muted small">Going on leave? Give someone your approvals for a set time.</p>
         <Delegation />
       </section>
+      <AuditorAccess editable={editable} />
       <AuditTrail />
       <section className="panel-card">
         <h2>Who decides what</h2>

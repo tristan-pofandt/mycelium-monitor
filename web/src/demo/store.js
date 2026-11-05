@@ -19,6 +19,7 @@ const fresh = () => ({
   dataRequests: [], // corrections asked for from My data
   docs: {}, // documents: review decisions keyed by document id
   packs: [], // audit packs built
+  auditors: [], // guest auditors given read-only access on Roles: { id, name, firm, sites, framework, until }
   tv: { announcement: "", screens: null }, // floor screen settings
   commuteOptOut: {}, // route alerts: personId -> true (turned off) or false (turned back on), over the seeded consent (weather.js)
 });

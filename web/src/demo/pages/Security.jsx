@@ -6,7 +6,8 @@ import { useState } from "react";
 import { useSearchParams } from "react-router";
 import { KpiTile, Table } from "../../charts.jsx";
 import { rovingKeys, useToast } from "../../ui.jsx";
-import { CAMERAS, DOOR_EVENTS, INSPECTIONS, POLICIES, VISITORS, dayOffset, fmtAgo, fmtDay, person, siteName } from "../data.js";
+import { CAMERAS, DOOR_EVENTS, INSPECTIONS, VISITORS, dayOffset, fmtAgo, fmtDay, person, siteName } from "../data.js";
+import { PoliciesCard } from "../controls.jsx";
 import { AlertsList, SourceNote, useAlerts } from "../bits.jsx";
 import { update, useCan, useDemo, usePersona } from "../store.js";
 import Cyber from "./Devices.jsx";
@@ -92,17 +93,7 @@ function Physical() {
           rows={CAMERAS.filter(mine).map((c) => [siteName(c.site), c.total, c.offline.length ? c.offline.join(", ") : "None", <span key="s" className={c.storageDays < 30 ? "late" : ""}>{c.storageDays} days</span>])} />
         <SourceNote ids={["cctv", "alarms", "guards"]} />
       </section>
-      <section className="panel-card">
-        <h2>Physical security policies</h2>
-        <p className="muted small">Each policy, the evidence that shows it's being followed, and where it isn't.</p>
-        <ul className="queue" role="list">{POLICIES.map((x) => (
-          <li key={x.policy} className="queue-item">
-            <p><span className={`badge ${x.ok ? "badge-ok" : "badge-bad"}`}>{x.ok ? "Met" : "Gap"}</span> <strong>{x.policy}</strong></p>
-            <p className="muted small">{x.status} · evidence: {x.evidence}</p>
-            <SourceNote ids={[x.source]} />
-          </li>
-        ))}</ul>
-      </section>
+      <PoliciesCard />
     </>
   );
 }
