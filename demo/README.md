@@ -70,8 +70,9 @@ review. It runs on a fictional company, **Brolga Industries**: 4 Queensland site
   bar) or a phone (Android: Install app; iPhone: Share, then Add to Home Screen). It has its own manifest
   (`web/src/demo/manifest.webmanifest`, "Mycelium demo") and reuses the main site's icons and app-shell service worker from
   `web/public` (only the shell is cached; feedback and answers always go to the server).
-- **Phone:** the header keeps the logo, "Viewing as" and the theme; Your systems and Feedback move into the banner with their
-  labels; Roles and Setup join the end of the tab row.
+- **Header in four steps:** below 1600px the tabs take their own row; below 1320px Your systems and Feedback move into the
+  banner; below 960px Roles, Setup and Audit join the end of the tab row (which fades at its end only while tabs are hidden
+  past it); below 760px Roll call joins the banner and "How it works" becomes a link. Every control keeps its label.
 
 ## Where feedback goes
 

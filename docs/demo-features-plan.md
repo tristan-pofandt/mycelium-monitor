@@ -1,6 +1,6 @@
 # Plan: eleven new features in the demo
 
-**Status:** plan, 2026-11-05. Nothing here is built yet. Written by Claude Code from Tristan's list of 5 Nov (which picks from
+**Status:** built in the demo on 2026-11-05 (commits c28fd3a to 7d098ab and the review pass after them). Written by Claude Code from Tristan's list of 5 Nov (which picks from
 "Ideas to stand out" in the vault note); human review required.
 
 The features go into the fictional Brolga Industries demo (`web/src/demo`), built the same way as the pages already there.
@@ -372,3 +372,22 @@ Features 7 and 8 don't touch the files of 1 to 6, so they could run in parallel 
    decision 3.
 4. **Real or drill:** should the demo let reviewers start a "real" roll call at all? Recommended: drills only, with "Real"
    shown but disabled and explained.
+
+## How the open questions were settled for the demo (2026-11-05)
+
+Tristan asked for everything to be built without stopping, so the demo uses the recommended answers. Each is still open
+for the design partner:
+1. No Finance persona: Documents and tax shows to the GM (the `finance` permission can be given to any role on Roles).
+2. Commute risk uses home postcodes, only for people who opted in (about 70% in the fictional data), and each employee can
+   turn it off. The question is in Your systems (`s_commute`).
+3. Permits alert only. Adding holders' cards to an area's access group is described as an approved action, not shown working.
+4. Roll call runs drills only; "Real" is shown, disabled and explained.
+
+## How it was built
+
+Claude Code built the shared foundation (machines and skills on their own seed, permissions with a migration for saved
+grants, guesses, store keys, page stubs), then ran the features as parallel agents in three waves, each owning its own
+files: (1) skills and rosters, permits, site map, weather, documents; (2) roll call, audit evidence, My data; (3) TV mode,
+customisable Home. The lead integrated them (live roster coverage on Sites and Home, weather in the roster's problems, the
+site map on Security with "Show on map" from every alert), then three review agents ran impeccable, emil-design-eng,
+break-ui and accessibility passes over separate groups of pages. Human review is required.

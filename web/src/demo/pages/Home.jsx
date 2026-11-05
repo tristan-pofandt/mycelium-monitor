@@ -93,13 +93,18 @@ function Slot({ entry, index, count, persona, me, editing, armed, instant, tools
   const controls = useDragControls();
   const ref = useRef(null);
   const [forced, setForced] = useState(false);
+  const [lifted, setLifted] = useState(false);
   useLayoutEffect(() => { if (editing) setForced(!!ref.current?.matches(FORCED)); }, [editing, entry.size]);
   const wide = !card.full && entry.size === 2;
+  // layout stays on from mount: framer only wires its layout animation and the drag's "follow the pointer when the card
+  // changes slot" correction for elements that mount with layout, so switching it on in edit mode left the dragged card
+  // off screen. Outside edit mode (and for keyboard moves and reduced motion) the duration is 0, so nothing slides.
+  const slide = editing && armed && !reduced && !instant;
   return (
-    <motion.div ref={ref} data-card={entry.id} className={`home-slot${wide ? " span-2" : ""}${card.full ? " home-full" : ""}${editing ? " is-editing" : ""}`}
-      layout={editing && armed ? "position" : false} transition={{ layout: reduced || instant ? { duration: 0 } : { duration: DUR.panel * slow(), ease: EASE } }}
-      drag={editing} dragListener={false} dragControls={controls} dragSnapToOrigin dragMomentum={false} whileDrag={{ zIndex: 5 }}
-      onDragStart={() => tools.dragStart(entry.id)} onDrag={(e, info) => tools.dragOver(entry.id, e, info)} onDragEnd={() => tools.dragEnd(entry.id)}>
+    <motion.div ref={ref} data-card={entry.id} className={`home-slot${wide ? " span-2" : ""}${card.full ? " home-full" : ""}${editing ? " is-editing" : ""}${lifted ? " is-lifted" : ""}`}
+      layout="position" transition={{ layout: slide ? { duration: DUR.panel * slow(), ease: EASE } : { duration: 0 } }}
+      drag={editing} dragListener={false} dragControls={controls} dragSnapToOrigin dragMomentum={false} whileDrag={reduced ? { zIndex: 5 } : { zIndex: 5, scale: 1.02 }}
+      onDragStart={() => { setLifted(true); tools.dragStart(entry.id); }} onDrag={(e, info) => tools.dragOver(entry.id, e, info)} onDragEnd={() => { setLifted(false); tools.dragEnd(entry.id); }}>
       {editing && (
         <motion.div className="home-tools" role="group" aria-label={`${title}, position ${index + 1} of ${count}`}
           initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: DUR.fade * slow(), ease: EASE }}>
@@ -196,8 +201,11 @@ export default function Home() {
     },
     dragStart(id) { setInstant(false); drag.current = { from: draft.findIndex((x) => x.id === id), over: null }; },
     dragOver(id, e, info) {
-      const x = e.clientX ?? info.point.x - scrollX, y = e.clientY ?? info.point.y - scrollY;
-      const over = document.elementsFromPoint(x, y).map((n) => n.closest(".home-slot")).find((s) => s && s.dataset.card !== id)?.dataset.card || null;
+      // Hit-test the slots where they sit in the grid (offset boxes ignore transforms), not where they are drawn: a card still
+      // sliding away under the pointer would otherwise be "entered" again and swap straight back.
+      const { x, y } = info.point; // page coordinates
+      const hit = (s) => { const p = s.offsetParent?.getBoundingClientRect() || { left: 0, top: 0 }; const l = p.left + scrollX + s.offsetLeft, t = p.top + scrollY + s.offsetTop; return x >= l && x <= l + s.offsetWidth && y >= t && y <= t + s.offsetHeight; };
+      const over = [...document.querySelectorAll(".home-slot")].find((s) => s.dataset.card !== id && hit(s))?.dataset.card || null;
       if (over === drag.current.over) return;
       drag.current.over = over; // one move per card entered, so a card sliding under the pointer doesn't bounce back
       if (over) setDraft((d) => move(d, d.findIndex((c) => c.id === id), d.findIndex((c) => c.id === over)));

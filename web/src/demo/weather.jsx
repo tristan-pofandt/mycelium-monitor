@@ -27,8 +27,7 @@ function WarningItem({ w }) {
   return (
     <li className="queue-item">
       <p><span className={`badge ${l.badge}`}><Icon name={l.icon} />{w.kind}</span> <strong>{w.area}</strong></p>
-      <p className="small">{w.detail}</p>
-      <p className="muted small">{spanText(w)}. Issued {whenText(w.issued)} by the Bureau of Meteorology (simulated).</p>
+      <p className="muted small">{w.detail} {spanText(w)}. Issued {whenText(w.issued)}.</p>
     </li>
   );
 }
@@ -70,7 +69,7 @@ function Lists({ warns, roads, empty }) {
 function Footer() {
   return (
     <>
-      <p className="muted small">A real deployment would read the Bureau of Meteorology's public warnings and QLDTraffic's open data, after checking their terms of reuse. This demo calls nothing: its content security policy blocks outside requests, so all of this is made up.</p>
+      <p className="muted small">Simulated: a real deployment would read the Bureau of Meteorology's warnings and QLDTraffic's open data, after checking their terms of reuse. This demo fetches nothing.</p>
       <SourceNote ids={["s_commute", "hr"]} />
     </>
   );
@@ -115,18 +114,23 @@ function ShiftCounts({ risk }) {
 function TeamRisk({ risk, me }) {
   const can = useCan();
   if (!risk.length) return <p className="muted">No one in your team who opted in is expected to be cut off tomorrow.</p>;
+  const sorted = [...risk].sort((a, b) => (b.severity === "high") - (a.severity === "high")); // cut off first
+  const row = (r) => (
+    <li key={r.id} className="queue-item">
+      <p><strong>{r.id === me.id ? "You" : person(r.id).name}</strong> <span className={`badge ${r.severity === "high" ? "badge-bad" : "badge-warn"}`}><Icon name={r.severity === "high" ? "down" : "errors"} />{r.severity === "high" ? "Cut off" : "May be cut off"}</span></p>
+      <p className="muted small">{joinAnd([...r.roads.map(roadName), ...r.warnings.map((w) => w.kind)])}</p>
+    </li>
+  );
   return (
     <>
       <p className="notice"><strong>{risk.length} of tomorrow's {me.shift.toLowerCase()} shift</strong> live in postcodes that {joinAnd(causes(risk))} may cut off.
         {can("roster") && <> <Link to="/rosters">Add backups</Link></>}</p>
-      <ul className="queue" role="list" aria-label="Your team members at risk tomorrow">
-        {risk.map((r) => (
-          <li key={r.id} className="queue-item">
-            <p><strong>{r.id === me.id ? "You" : person(r.id).name}</strong> <span className={`badge ${r.severity === "high" ? "badge-bad" : "badge-warn"}`}><Icon name={r.severity === "high" ? "down" : "errors"} />{r.severity === "high" ? "Cut off" : "May be cut off"}</span></p>
-            <p className="muted small">{joinAnd([...r.roads.map(roadName), ...r.warnings.map((w) => w.kind)])}</p>
-          </li>
-        ))}
-      </ul>
+      <ul className="queue" role="list" aria-label="Your team members at risk tomorrow">{sorted.slice(0, 4).map(row)}</ul>
+      {sorted.length > 4 && (
+        <details className="table-toggle"><summary>{sorted.length - 4} more {sorted.length - 4 === 1 ? "person" : "people"}</summary>
+          <ul className="queue" role="list" aria-label="More team members at risk tomorrow">{sorted.slice(4).map(row)}</ul>
+        </details>
+      )}
       <p className="muted small">Only people who agreed to share their home postcode are counted. You never see the postcode or address.</p>
     </>
   );
@@ -164,6 +168,8 @@ export function WeatherCard() {
   const risk = useCommuteRisk(persona, 1);
   const warns = forSites(WARNINGS, places);
   const roads = forSites(ROADS, places);
+  const summary = ["gm", "site_manager", "supervisor", "employee"].includes(persona.id);
+  const lists = <Lists warns={warns} roads={roads} empty={one ? `No warnings or road closures for ${siteName(one)}.` : "No warnings or road closures."} />;
   return (
     <section className="panel-card wx-card" aria-labelledby="wx-h">
       <div className="card-head">
@@ -172,9 +178,13 @@ export function WeatherCard() {
       {persona.id === "employee" && <MyRoute me={me} />}
       {persona.id === "gm" && <SiteCounts risk={risk} />}
       {one && <Outlook site={one} />}
-      <Lists warns={warns} roads={roads} empty={one ? `No warnings or road closures for ${siteName(one)}.` : "No warnings or road closures."} />
       {persona.id === "site_manager" && <ShiftCounts risk={risk} />}
       {persona.id === "supervisor" && <TeamRisk risk={risk} me={me} />}
+      {/* Roles with a summary above (who is affected) get the full warnings and roads behind one disclosure, so the card stays
+          a glance on Home; Security and IT, whose card is the list, see it open. */}
+      {summary && (warns.length || roads.length) ? (
+        <details className="table-toggle wx-more"><summary>Warnings and roads in detail ({[warns.length && `${warns.length} ${warns.length === 1 ? "warning" : "warnings"}`, roads.length && `${roads.length} ${roads.length === 1 ? "road" : "roads"}`].filter(Boolean).join(", ")})</summary>{lists}</details>
+      ) : lists}
       <Footer />
     </section>
   );

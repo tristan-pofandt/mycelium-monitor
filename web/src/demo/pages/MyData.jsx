@@ -64,7 +64,7 @@ function Correction({ me, cards }) {
     } } });
   };
   return (
-    <section className="panel-card" id="correction" aria-labelledby="fix-h">
+    <section className="panel-card held-wide" id="correction" aria-labelledby="fix-h">
       <h2 id="fix-h">Ask for a correction</h2>
       <p className="card-sub">Something wrong or out of date? Tell HR. They fix it in the system it came from, and the fix flows through to Mycelium.</p>
       <form className="form-grid" onSubmit={send}>
@@ -81,7 +81,7 @@ function Correction({ me, cards }) {
           {mine.map((r) => <li key={r.id} className="queue-item"><p><span className="badge">Data</span> {r.card}: {r.text}</p><p className="muted small">{r.status} · {fmtDay(new Date(r.at))}</p></li>)}
         </ul>
       )}
-      <p className="muted small">Today HR handles these by email (<SystemName id="privacy" />). Here it's one form, and it lands in the audit trail.</p>
+      <p className="muted small">Today: <SystemName id="privacy" />. Here it's one form, and it lands in the audit trail.</p>
       <SourceNote ids={["privacy", "hr"]} />
     </section>
   );

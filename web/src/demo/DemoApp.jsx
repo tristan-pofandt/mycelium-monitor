@@ -1,12 +1,12 @@
 // The demo shell: Mycelium's header and pill nav, a "Viewing as" switcher that shows the same app as six different people,
 // a banner saying everything is fictional, and the feedback box under every page.
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, Navigate, Route, Routes, useLocation, useParams } from "react-router";
 import { Icon, Logo } from "../icons.jsx";
 import { Picker, rovingKeys } from "../ui.jsx";
 import { ThemeToggle, usePill } from "../App.jsx";
 import Page from "../Page.jsx";
-import { COMPANY, PERSONAS } from "./data.js";
+import { COMPANY, PERSONAS, person } from "./data.js";
 import { ASSUMPTIONS } from "./assumptions.js";
 import { FeedbackBox, FeedbackDialog, SourcesScope, loadAnswers, openFeedback } from "./feedback.jsx";
 import { update, useDemo, usePersona } from "./store.js";
@@ -79,7 +79,10 @@ function Shell() {
   const location = useLocation();
   const persona = usePersona();
   const { answers, grants } = useDemo();
-  const rollcallOn = useDemo((s) => !!s.rollcall); // the banner turns red on every page while a roll call runs (rollcall.jsx)
+  const rollcall = useDemo((s) => s.rollcall);
+  const rollcallOn = !!rollcall; // while a roll call runs the banner says so on every page (rollcall.jsx)
+  // ...and turns red only for people who run it or work at that site; everyone else gets the line without the alarm
+  const rollcallUrgent = rollcallOn && ((grants[persona.id] || []).includes("emergency") || person(persona.person)?.site === rollcall.site);
   const rowRef = useRef(null), pillRef = useRef(null);
   usePill(rowRef, pillRef, `${persona.id}/${id}`);
   useEffect(() => { loadAnswers(); }, []);
@@ -88,6 +91,19 @@ function Shell() {
   const nav = PAGES.filter((p) => !p.tool && !p.hidden && canSee(p, persona.id, grants));
   const tools = PAGES.filter((p) => p.tool && canSee(p, persona.id, grants));
   const answered = ASSUMPTIONS.filter((a) => answers[a.id]).length;
+  // The tab row scrolls when it can't fit (the GM's 9 tabs plus the tools below 960px): fade its end while more tabs are
+  // hidden, so a row that happens to end between two tabs doesn't look complete.
+  const [more, setMore] = useState(false);
+  useEffect(() => {
+    const ul = rowRef.current;
+    if (!ul || typeof ResizeObserver === "undefined") return undefined;
+    const check = () => setMore(ul.scrollWidth - ul.scrollLeft - ul.clientWidth > 4);
+    const ro = new ResizeObserver(check);
+    ro.observe(ul);
+    ul.addEventListener("scroll", check, { passive: true });
+    check();
+    return () => { ro.disconnect(); ul.removeEventListener("scroll", check); };
+  }, [nav.length, tools.length]);
   const Body = page.component;
   const visible = canSee(page, persona.id, grants);
   useEffect(() => { document.title = `${page.title} · Mycelium demo`; }, [page.title]);
@@ -101,12 +117,12 @@ function Shell() {
             options={PERSONAS.map((p) => ({ value: p.id, label: p.label }))} />
         </div>
         <nav className="pills" aria-label="Pages">
-          <ul role="list" ref={rowRef} onKeyDown={(e) => rovingKeys(e, "a.pill")}>
+          <ul role="list" ref={rowRef} className={more ? "has-more" : undefined} onKeyDown={(e) => rovingKeys(e, "a.pill")}>
             <li className="pill-indicator" ref={pillRef} role="presentation" aria-hidden="true" />
             {nav.map((p) => (
               <li key={p.id}><NavLink to={`/${p.id}`} end className="pill"><Icon name={p.icon} /><span>{p.short}</span></NavLink></li>
             ))}
-            {tools.map((p) => ( /* on phones the header has no room for these, so they join the end of the tab row */
+            {tools.map((p) => ( /* below 960px the header has no room for these, so they join the end of the tab row */
               <li key={p.id} className="pill-tool"><NavLink to={`/${p.id}`} end className="pill"><Icon name={p.icon} /><span>{p.short}</span></NavLink></li>
             ))}
           </ul>
@@ -121,14 +137,16 @@ function Shell() {
           ))}
         </div>
       </header>
-      <div className={`demo-banner ${rollcallOn ? "is-rollcall" : ""}`}>
+      <div className={`demo-banner ${rollcallUrgent ? "is-rollcall" : ""}`}>
         {rollcallOn ? <RollCallLine /> : <p><strong>Demo:</strong> {COMPANY.name} is made up, and so is every number.<span className="banner-long"> Dashed <span className="assumed-tag">Our guess</span> tags
-          mark what we guessed about your systems.</span></p>}
+          mark what we guessed about your systems.</span> <NavLink to="/about" className="banner-guide-link">How it works</NavLink></p>}
+        {/* Where each control lives as the screen narrows (demo.css): Your systems and Feedback move here below 1320px,
+            Roll call below 760px; Roles, Setup and Audit join the tab row below 960px. Every one keeps its label. */}
         <div className="banner-actions">
           <NavLink to="/about" className="button banner-guide">How it works</NavLink>
           <RollCallButton className="banner-only" />
-          <SystemsLink answered={answered} className="button banner-only" />
-          <button type="button" className="button banner-only" onClick={() => openFeedback(null)}><Icon name="message" /><span>Feedback</span></button>
+          <SystemsLink answered={answered} className="button banner-only banner-mid" />
+          <button type="button" className="button banner-only banner-mid" onClick={() => openFeedback(null)}><Icon name="message" /><span>Feedback</span></button>
         </div>
       </div>
       <main className="content" id="main" tabIndex={-1}>

@@ -52,8 +52,8 @@ function Inbox({ open }) {
 
 function WatchedFolders() {
   return (
-    <section className="panel-card">
-      <div className="card-head"><div><h2>Watched folders</h2><p className="card-sub">The only places Mycelium reads, as set up in <SystemName id="ap_inbox" /></p></div></div>
+    <section className="panel-card span-2">
+      <div className="card-head"><div><h2>Watched folders</h2><p className="card-sub">The only places Mycelium reads, nominated by your finance team</p></div></div>
       <ul className="queue" role="list">{SOURCES.map((s) => (
         <li key={s.id} className="queue-item">
           <p><strong>{s.name}</strong> <span className="muted small">· {s.where}</span></p>
@@ -223,7 +223,7 @@ function TaxPack() {
         {docs.some((d) => d.checks.missingTrips && !decisions[d.id]) && <p className="muted small">A logbook waiting for review isn't counted until someone accepts it.</p>}
         <SourceNote ids={["ap_inbox"]} />
       </section>
-      <section className="panel-card">
+      <section className="panel-card doc-wide">
         <h2>Export for your tax agent</h2>
         <p className="muted small">One CSV: the GST summary, the logbook summary, and every document behind them, with where each came from. It's made in your browser from the demo's fictional data.</p>
         {can("export")

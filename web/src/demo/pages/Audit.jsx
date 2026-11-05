@@ -86,7 +86,7 @@ function AuditorHere({ framework }) {
       {can("export") ? (
         <div className="form-grid">
           <div className="toolbar">
-            <label>Framework <select className="input" value={fw} onChange={(e) => setFw(e.target.value)}>{FRAMEWORKS.map((f) => <option key={f.id} value={f.id}>{f.name} ({f.sub.toLowerCase()})</option>)}</select></label>
+            <label>Framework <select className="input" value={fw} onChange={(e) => setFw(e.target.value)}>{FRAMEWORKS.map((f) => <option key={f.id} value={f.id}>{f.name} ({f.sub})</option>)}</select></label>
             <label>Period <select className="input" value={days} onChange={(e) => setDays(Number(e.target.value))}>{[30, 90, 180, 365].map((d) => <option key={d} value={d}>Last {d} days</option>)}</select></label>
           </div>
           {places.length > 1 ? (
@@ -150,7 +150,7 @@ export default function Audit() {
         <KpiTile icon="clock" label="Controls with stale evidence" value={String(count("stale"))} />
       </dl>
       <section className="panel-card span-2">
-        <div className="card-head"><div><h2>{fw.name}: {fw.sub.toLowerCase()}</h2><p className="card-sub">Each control with the evidence collected for it. Open one to see the items and where they live.</p></div></div>
+        <div className="card-head"><div><h2>{fw.name}: {fw.sub}</h2><p className="card-sub">Each control with the evidence collected for it. Open one to see the items and where they live.</p></div></div>
         <ul className="ctl-rows" role="list">{rows.map((r) => <ControlRow key={r.control.id} row={r} open={opened === r.control.id} />)}</ul>
         <p className="muted small">Control numbers and short titles only; the standards' own text stays with their publishers. The Essential Eight is published free by the ACSC.</p>
         <SourceNote ids={sources(rows)} />

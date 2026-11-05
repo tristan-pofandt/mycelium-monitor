@@ -1,6 +1,7 @@
 // The cards a Home can hold (feature 10, docs/demo-features-plan.md): the same idea as web/src/panels/index.js.
-// Each entry is { id, title, cap?, roles?, sizes, full?, component }: `cap` is the permission the role needs, `roles` limits a
-// card to some personas (each persona's own key figures), `sizes` the widths it may take (1 or 2 columns), `full` a card that
+// Each entry is { id, title, cap?, roles?, notFor?, sizes, full?, component }: `cap` is the permission the role needs, `roles`
+// limits a card to some personas (each persona's own key figures or records), `notFor` keeps it from personas whose scope is
+// narrower than the card (the Site Manager sees one site, so not the four-site comparison), `sizes` the widths it may take (1 or 2 columns), `full` a card that
 // always takes the whole row. A component gets { persona, me } and renders one card. DEFAULT_LAYOUTS reproduce the six homes
 // as they were hand-written before the registry, so nothing looks different until someone customises.
 import { Link } from "react-router";
@@ -140,7 +141,12 @@ function Approvals({ persona }) {
 }
 function OpenTasks({ persona }) {
   const tasks = useTasks().filter((t) => t.status !== "done").slice(0, 5);
-  return <Card title={TASKS_TITLE(persona)} to="/work" label="Open work"><ul className="tasks" role="list">{tasks.map((t) => <TaskRow key={t.id} t={t} />)}</ul></Card>;
+  return (
+    <Card title={TASKS_TITLE(persona)} to="/work" label="Open work">
+      {tasks.length ? <ul className="tasks" role="list">{tasks.map((t) => <TaskRow key={t.id} t={t} />)}</ul>
+        : <p className="muted">No open tasks{persona === "supervisor" ? " in your team" : persona === "site_manager" ? " at your site" : ""}. <Link to="/work">Hand one out on Work</Link></p>}
+    </Card>
+  );
 }
 const TASKS_TITLE = (p) => (p === "supervisor" ? "Team tasks" : p === "site_manager" ? "Open tasks at your site" : "Open tasks");
 function Alerts({ persona }) {
@@ -277,9 +283,9 @@ export const HOME_CARDS = [
   { id: "alerts", title: ALERTS_TITLE, cap: "security", sizes: [1, 2], component: Alerts },
   { id: "today", title: "Today", sizes: [1, 2], component: Today },
   { id: "weather", title: "Weather and roads", sizes: [1, 2], component: WeatherCard },
-  { id: "sites", title: "Sites at a glance", cap: "sites", full: true, sizes: [2], component: SitesGlance },
+  { id: "sites", title: "Sites at a glance", cap: "sites", notFor: ["site_manager"], full: true, sizes: [2], component: SitesGlance },
   { id: "certs", title: "Certificates expiring", roles: ["supervisor"], sizes: [1, 2], component: Certs },
-  { id: "tickets", title: "My IT tickets", sizes: [1, 2], component: Tickets },
+  { id: "tickets", title: "My IT tickets", roles: ["employee"], sizes: [1, 2], component: Tickets },
   { id: "mytasks", title: "My tasks", sizes: [1, 2], component: MyTasks },
   { id: "requests", title: "My requests", sizes: [1, 2], component: MyRequests },
   { id: "mydata", title: "What we hold about you", sizes: [1, 2], component: MyData },

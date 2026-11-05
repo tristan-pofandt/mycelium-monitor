@@ -30,7 +30,7 @@
 .rc-group .small-head { margin: 16px 0 6px; }
 .rc-rows { list-style: none; margin: 0; padding: 0; display: grid; }
 .rc-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 10px 0; border-top: 1px solid var(--border); }
-.rc-row.is-missing { box-shadow: inset 3px 0 0 var(--error); padding-left: 12px; }
+.rc-row.is-missing { background: var(--bad-soft); padding-left: 12px; padding-right: 12px; border-radius: var(--r-tile); } /* the pressed red Not found button carries the word */
 .rc-who { display: grid; gap: 2px; min-width: 0; flex: 1 1 220px; }
 .rc-name { font-weight: 600; font-size: 16px; overflow-wrap: anywhere; }
 .rc-tags { display: flex; flex-wrap: wrap; gap: 6px; }

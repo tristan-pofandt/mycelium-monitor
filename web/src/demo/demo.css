@@ -19,6 +19,8 @@ select.input { padding-right: 28px; }
 .banner-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .banner-actions .button { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; text-decoration: none; white-space: nowrap; }
 .banner-only { display: none !important; } /* Your systems and Feedback live in the header until the header runs out of room */
+.banner-guide-link { display: none; white-space: nowrap; color: var(--accent-text); font-weight: 500; text-decoration: none; } /* "How it works" as a link in the sentence on phones */
+.banner-guide-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .systems-button { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; white-space: nowrap; }
 .systems-button .count, .banner-actions .count { font-size: 12px; font-variant-numeric: tabular-nums; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-text); }
 .systems-button.active { border-color: var(--accent); }
@@ -36,7 +38,23 @@ select.input { padding-right: 28px; }
 .page-grid > .panel-card:has(.table-wrap, .chart, .week, .board, .team-map) { grid-column: 1 / -1; }
 .feedback-button, .tool-link { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; text-decoration: none; }
 .tool-link.active { border-color: var(--accent); color: var(--accent-text); }
-.pill-tool { display: none; } /* Roles and Setup join the tab row on phones only */
+.pill-tool { display: none; } /* Roles, Setup and Audit join the tab row below 960px */
+/* The header narrows in steps, keeping every control labelled (the GM has 9 tabs, 3 tools and Roll call):
+   - below 1600px the tabs take their own row;
+   - below 1320px Your systems and Feedback (the reviewer's controls, not the app's) move into the demo banner;
+   - below 960px Roles, Setup and Audit join the end of the tab row, which scrolls;
+   - below 760px (phones) Roll call moves into the banner too (rollcall.css) and "How it works" becomes a link. */
+@media (max-width: 1320px) {
+  .demo .topbar-end .systems-button, .demo .topbar-end .feedback-button { display: none; }
+  .banner-mid { display: inline-flex !important; }
+}
+@media (max-width: 960px) {
+  .demo .tool-link { display: none; }
+  .pill-tool { display: block; }
+}
+/* Fade the tab row's end only while tabs are hidden past it (DemoApp sets has-more); app.css's phone fade otherwise stays off */
+.demo .pills ul.has-more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); }
+.demo .pills ul:not(.has-more) { -webkit-mask-image: none; mask-image: none; }
 .picker-icon { color: var(--text-muted); }
 
 /* Assumed tags: dashed, so a guess never reads as a fact */
@@ -184,12 +202,11 @@ select.input { padding-right: 28px; }
      labels, and Roles and Setup join the end of the tab row. */
   .demo-banner { margin: 0 16px 8px; padding: 10px 12px; font-size: 13px; }
   .demo-banner p { flex: 1 1 100%; }
-  .demo .topbar-end .systems-button, .demo .topbar-end .feedback-button, .demo .tool-link { display: none; }
   .banner-only { display: inline-flex !important; }
-  .banner-long { display: none; }
+  .banner-long, .demo-banner:not(.is-rollcall) .banner-guide { display: none; }
+  .banner-guide-link { display: inline; }
   .banner-actions { width: 100%; }
   .banner-actions .button { min-height: 40px; }
-  .pill-tool { display: block; }
   .demo .topbar-end { gap: 6px; }
   .demo .topbar { grid-template-columns: minmax(0, 1fr) auto; }
   .demo .topbar-start, .demo .picker { min-width: 0; }
@@ -287,3 +304,15 @@ select.input { padding-right: 28px; }
 
 /* Security: the map card a "Show on map" link jumps to sits below the sticky header */
 #security-map { scroll-margin-top: 150px; }
+
+/* Review 2026-11-05: toolbars and card tools shrink and wrap on phones; the Roles grid keeps permission names in view while it scrolls. */
+.toolbar label { max-width: 100%; }
+.toolbar select.input { min-width: 0; max-width: 100%; text-overflow: ellipsis; }
+.demo .card-tools { flex-wrap: wrap; min-width: 0; }
+.matrix tbody th, .matrix thead th:first-child { position: sticky; left: 0; z-index: 1; background: var(--bg-card); }
+.matrix tbody .matrix-group th { background: var(--bg-pop); }
+/* Light mode: the amber badge text needs a darker step to reach 4.5:1 on its own tint (DESIGN.md, Light-Mode Contrast Rule) */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .badge-warn { background: color-mix(in srgb, var(--warning) 10%, transparent); color: color-mix(in srgb, var(--warning) 85%, var(--text)); }
+}
+:root[data-theme="light"] .badge-warn { background: color-mix(in srgb, var(--warning) 10%, transparent); color: color-mix(in srgb, var(--warning) 85%, var(--text)); }

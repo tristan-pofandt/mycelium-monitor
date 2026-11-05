@@ -2,6 +2,8 @@
 .held-intro { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; }
 .held-intro h2 { margin: 0 0 4px; }
 .held-intro p { margin: 0; max-width: 62ch; }
+.held-wide { grid-column: 1 / -1; } /* the correction form takes the row rather than sitting alone at a third */
+.held-wide .form-grid { max-width: 640px; }
 
 .held-part + .held-part { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
 .held-h { font-size: 15px; margin: 0 0 8px; }

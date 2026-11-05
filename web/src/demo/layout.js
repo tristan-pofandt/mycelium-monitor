@@ -5,7 +5,8 @@ import { DEFAULT_LAYOUTS, HOME_CARDS } from "./homecards.jsx";
 
 export const cardById = (id) => HOME_CARDS.find((c) => c.id === id);
 export const titleOf = (card, persona) => (typeof card.title === "function" ? card.title(persona) : card.title);
-export const allowed = (card, persona, caps = []) => !!card && (!card.roles || card.roles.includes(persona)) && (!card.cap || caps.includes(card.cap));
+export const allowed = (card, persona, caps = []) => !!card && (!card.roles || card.roles.includes(persona)) && !card.notFor?.includes(persona)
+  && (!card.cap || caps.includes(card.cap));
 
 export function layoutFor(persona, saved = {}, grants = {}, roleDefaults = {}) {
   const caps = grants[persona] || [];

@@ -1,7 +1,7 @@
 /* Documents and tax (pages/Documents.jsx, docs.jsx). Tokens only; nothing here animates. */
 
 /* Review: the queue, the document as it arrived, and the fields read from it */
-.doc-review-card { grid-column: 1 / -1; }
+.doc-review-card, .doc-wide { grid-column: 1 / -1; } /* a lone short card takes the row rather than stopping at a third */
 .doc-review { display: grid; gap: 20px; grid-template-columns: minmax(190px, 230px) minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; }
 @media (max-width: 1180px) { .doc-review { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .doc-queue { grid-column: 1 / -1; } }
 @media (max-width: 760px) { .doc-review { grid-template-columns: minmax(0, 1fr); } }
@@ -46,7 +46,7 @@
 .doc-why { padding: 12px 14px; border-radius: var(--r-field); background: var(--bg-pop); border-left: 3px solid var(--warning); font-size: 14px; }
 .doc-why.is-flagged { border-left-color: var(--error); }
 .doc-why p { margin: 0 0 6px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.doc-why ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.doc-why ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; text-wrap: pretty; }
 .doc-field-list { list-style: none; margin: 0; padding: 0; }
 .doc-field-list li { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; flex-wrap: wrap; padding: 9px 0; border-top: 1px solid var(--border); }
 .doc-field-list li:first-child { border-top: 0; }

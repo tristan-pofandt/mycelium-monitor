@@ -43,6 +43,15 @@ describe("Home layouts", () => {
     expect(allowed(cardById("audit"), "employee", DEFAULT_GRANTS.employee)).toBe(false);
   });
 
+  it("never offers a card wider than the persona's scope or someone else's records", () => {
+    // The Site Manager has the "sites" permission but sees their own site only, so not the four-site comparison
+    expect(ids(addable("site_manager", DEFAULT_LAYOUTS.site_manager, DEFAULT_GRANTS.site_manager))).not.toContain("sites");
+    expect(layoutFor("site_manager", { site_manager: [{ id: "sites", size: 2 }, { id: "today", size: 1 }] }, DEFAULT_GRANTS)).toEqual([{ id: "today", size: 1 }]);
+    // My IT tickets are the employee's own tickets
+    for (const p of ["gm", "site_manager", "supervisor", "security", "it"]) expect(ids(addable(p, [], DEFAULT_GRANTS[p]))).not.toContain("tickets");
+    expect(ids(addable("gm", DEFAULT_LAYOUTS.gm, DEFAULT_GRANTS.gm))).not.toContain("sites"); // already on the GM's Home
+  });
+
   it("moves a card and ignores moves off either end", () => {
     const l = [{ id: "a" }, { id: "b" }, { id: "c" }];
     expect(ids(move(l, 2, 0))).toEqual(["c", "a", "b"]);

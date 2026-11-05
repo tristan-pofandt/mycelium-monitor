@@ -29,6 +29,10 @@
 .home-slot.is-editing { user-select: none; -webkit-user-select: none; }
 .home-slot.is-editing > .home-card > * { opacity: 0.72; }
 .home-slot.is-editing:active .home-grip { cursor: grabbing; }
+/* The card being dragged: lifted (framer's whileDrag scale, the roster ghost's shadow) and at full strength */
+.home-slot.is-lifted { cursor: grabbing; }
+.home-slot.is-lifted > .home-tools, .home-slot.is-lifted > .home-card > * { box-shadow: var(--shadow-card), 0 8px 20px rgba(0, 0, 0, 0.18); }
+.home-slot.is-lifted > .home-card > * { opacity: 1; }
 
 .home-add-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .home-add-row p { margin: 0; }

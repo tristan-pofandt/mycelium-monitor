@@ -11,10 +11,10 @@ import { TODAY_INDEX, siteShifts, skillGaps } from "./roster.js";
 const H = 3600e3, D = 864e5;
 
 export const FRAMEWORKS = [
-  { id: "iso9001", name: "ISO 9001", sub: "Quality" },
-  { id: "iso45001", name: "ISO 45001", sub: "Health and safety" },
-  { id: "iso27001", name: "ISO 27001", sub: "Physical controls" },
-  { id: "e8", name: "Essential Eight", sub: "ACSC" },
+  { id: "iso9001", name: "ISO 9001", sub: "quality" },
+  { id: "iso45001", name: "ISO 45001", sub: "health and safety" },
+  { id: "iso27001", name: "ISO 27001", sub: "physical controls" },
+  { id: "e8", name: "Essential Eight", sub: "cyber security, from the ACSC" }, // sub is shown as written (lower case, acronyms kept)
 ];
 export const frameworkName = (id) => FRAMEWORKS.find((f) => f.id === id)?.name || id;
 
