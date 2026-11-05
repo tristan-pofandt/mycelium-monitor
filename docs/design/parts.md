@@ -1,82 +1,87 @@
 # Parts: every building block
 
-The CSS for the parts marked **(kit)** is in `web/src/app.css` and their code is in the kit files (see `new-site.md`). Copy them; do not redraw them. Parts marked **(pattern)** are recipes: build them from tokens exactly as written here.
+The CSS for the parts marked **(kit)** is in `web/src/app.css` and their code is in the kit files (see `new-site.md`). Copy them; do not redraw them. Parts marked **(pattern)** are recipes: build them from tokens exactly as written here. Hover colour changes take 150ms on the house curve (`motion.md`).
 
 ## Header parts (kit)
 
-- **Tab row** (`.pills`): a pill bar on `--bg-card` with a border and card shadow, 4px inside padding, 2px between tabs. Each tab (`.pill`) is icon plus word, 14px, weight 500, padding `8px 14px`, muted grey. Hover turns the text white-ish on `--bg-pop`. The active tab has white text on the sliding accent pill (`.pill-indicator`). Arrow keys, Home and End move between tabs.
-- **Picker** (`Picker` in `ui.jsx`): a 40px pill button with a label and a chevron. The chevron turns upside down when open. The list (`.popover`) is a 16px-corner box on `--bg-card`, 6px padding, rows of 14px text. Arrows, Home, End and typing a letter move. Enter or Space chooses. Escape, Tab or a click outside closes and focus goes back to the button.
-- **Icon button** (`.icon-button`): a 40px circle on `--bg-card` with a border and card shadow. Always has a tooltip and an `aria-label`. Use it only for the theme button and search. Everything else gets a word.
-- **Tool button** (`.button.tool-link`): a normal pill button with an icon and a word. Active tool: accent border and accent text.
-- **Status pill**: a 40px tall badge on `--bg-card` showing the overall state in a word ("Healthy", "Down").
+- **Tab row** (`.pills`): a pill bar on `--bg-card` with a border and card shadow, 4px inside padding, 2px between tabs. Each tab (`.pill`) is icon plus word (7px apart), 14px, weight 500, padding `8px 14px`, muted grey. Hover: `--text` on `--bg-pop`. The active tab has white text on the sliding accent pill (`.pill-indicator`). Left and Right arrows, Home and End move between tabs.
+- **Picker** (`Picker` in `ui.jsx`): a 40px pill button on `--bg-card` (border, card shadow, padding `0 12px 0 16px`, 14px weight 500, at most 220px) with a muted icon, the chosen label and a chevron. The chevron turns upside down when open. The list (`.popover`) opens 8px below: a 16px-corner box on `--bg-card`, at least 200px wide, 6px padding, rows of 14px text with padding `9px 12px` and 10px corners. The row under the pointer or keys is `--bg-pop`; the chosen row is `--accent-text`, weight 500, with a check. Up or Down on the button opens it. Arrows, Home, End and typing a letter move. Enter or Space chooses and focus goes back to the button. Escape or Tab closes and focus goes back too; a click outside just closes.
+- **Icon button** (`.icon-button`): a 40px circle on `--bg-card` with a border and card shadow, muted icon. Hover: `--text` on `--bg-pop`. Active: `--accent-text` on `--accent-soft`. Always has an `aria-label`, and a tooltip in the header. Use it only where the icon is plain to everyone (theme, search, close, play or pause, move up or down). Everything else gets a word.
+- **Tool button** (`.button.tool-link`): a normal pill button with an icon and a word, 8px apart. Active tool: accent border and accent text.
+- **Status pill**: a 40px tall badge on `--bg-card` with a border and card shadow (padding `0 14px 0 12px`) showing the overall state in a word ("Healthy", "Down"). Down: red text.
 
 ## Cards (kit)
 
 - **Card** (`.card` or `.panel-card`): `--bg-card`, 1px border, card shadow, 24px corners, 24px padding.
-- **Card head** (`.card-head`): title (17px, 600) and a muted 13px subtitle (`.card-sub`) on the left; tools on the right (`.card-tools`: segmented control, round arrow link). 16px below it.
-- **Round arrow link** (`.round-link`): a 34px circle with a strong border and an arrow. It opens the full page for that card. Always has a tooltip.
-- **KPI tile** (`KpiTile` in `charts.jsx`): a 40px outlined icon box top left (12px corners, 1.5px border), a round arrow link top right, then the number (28px), the label (13px muted), then a change pill. The number counts up.
-- **Change pill** (`Delta`, `.delta`): a small pill with an arrow icon and a signed percent. Good: `--good-soft` and green. Bad: `--bad-soft` and red. No change: `--bg-pop` and muted, "No change". Screen readers hear the full phrase.
-- **Stat** (`Stat`, `.stat`): a 20px-corner box, 16px padding, label (13px muted), number (26px), note.
-- **Insight card** (`.insight`): the one colourful card. A radial gradient from `--insight-b` (top right) to `--insight-a`, white text at 19px weight 500, and a spark icon in a see-through white circle. The sentence must come from real numbers. If there is nothing worth saying, do not show the card. At most one per page.
+- **Card head** (`.card-head`): title (17px, 600) and a muted 13px subtitle 4px below (`.card-sub`) on the left; tools on the right (`.card-tools`, 8px apart, wrapping: segmented control, round arrow link). 12px between the two sides, 16px below the head.
+- **Round arrow link** (`.round-link`): a 34px circle with a strong border and a muted arrow. Hover: `--text` on `--bg-pop`. It opens the full page for that card. Always has a tooltip.
+- **KPI tile** (`KpiTile` in `charts.jsx`): a 40px outlined icon box top left (12px corners, 1.5px strong border, 18px icon), a round arrow link top right, 18px gap below them (12px on phones). Then the number (28px, line height 1.1), the label 6px below (13px muted), then a change pill 10px below. The number counts up. Tiles sit in a `<dl class="kpis">`.
+- **Change pill** (`Delta`, `.delta`): a pill (12px, weight 600, padding `2px 8px 2px 6px`) with a 14px trend arrow and a signed percent ("+12%", or "−4%" with a real minus). Colour follows meaning, not sign. Good: `--good-soft` and green. Bad: `--bad-soft` and red. No change, or nothing before: `--bg-pop` and muted, "No change" or "New". Screen readers hear "on the previous 24 hours" after it.
+- **Stat** (`Stat`, `.stat`): a 20px-corner box with a border and no shadow, 16px padding: label (13px muted), number (26px) 6px below, note (13px muted).
+- **Insight card** (`.insight`): the one colourful card. `radial-gradient(120% 140% at 100% 0%, var(--insight-b), var(--insight-a))`, 24px corners, 22px padding, white text at 19px weight 500, line height 1.35. A spark icon sits in a 34px circle of white at 18%, 12px left of the text. The sentence must come from real numbers. If there is nothing worth saying, do not show the card. At most one per page.
 - **Notice** (`.notice`): `--bg-pop`, 12px corners, `12px 16px` padding. One short message.
-- **Empty state** (`EmptyState`): a 42px icon tile, a bold title, one muted line, and maybe one button. Say what will show up here and how.
-- **Loading** (`Skeleton`): `--bg-pop` blocks with a soft shimmer every 1.6s. Off under reduced motion.
+- **Empty state** (`EmptyState`): centred, padding `28px 16px`. A 42px `--bg-pop` icon tile (14px corners, muted 20px icon), a bold title, one muted 14px line (at most 42 characters wide), and maybe one button. Say what will show up here and how.
+- **Loading** (`Skeleton`): `--bg-pop` blocks with 20px corners, plus optional 12px lines with 6px corners (85%, 70%, … wide), with a soft shimmer every 1.6s. Off under reduced motion.
 
 ## Buttons and controls (kit)
 
-- **Button** (`.button`): pill, `--bg-card`, strong border, 14px weight 500, padding `8px 16px`. Hover: `--bg-pop`. Press: shrinks to 0.97.
-- **Primary** (`.button-primary`): accent fill, white text. Hover brightens 10%. One per card at most.
-- **Danger** (`.button-danger`): red text. For anything you cannot undo, use the **hold button** (`HoldButton`): hold the mouse, Space or Enter for 1.2s. A fill grows across the button. Let go early and it unwinds.
-- **Saving button**: shows a spinner while working, then turns green with "Saved".
-- **Segmented control** (`.segmented`): a pill track on `--bg-pop` with small buttons. The chosen one lifts onto `--bg-card` with a shadow. Use it to switch views (24h / 7d / 30d).
-- **Chips** (`.chip`): 30px pills with a strong border, 13px. As toggles they use `aria-pressed`; off chips are dimmed and struck through.
-- **Switch** (`Switch`): 44 by 26px track, white 20px thumb. Accent when on. Has `role="switch"`.
-- **Text field** (`.input`): `--bg-surface`, strong border, 12px corners, `9px 12px` padding, 14px. Focus: 2px accent outline.
-- **Check box**: 18px with `accent-color: var(--accent)`.
-- **Link in text**: accent text, weight 500, no underline until hover. Never browser blue.
+- **Button** (`.button`): pill, `--bg-card`, strong border, 14px weight 500, padding `8px 16px`. Hover: `--bg-pop`. Press: shrinks to 0.97. Disabled: 50% opacity.
+- **Primary** (`.button-primary`): accent fill, white text, at least 140px wide, content centred. Hover brightens 10%. One per card at most.
+- **Danger** (`.button-danger`): red text. For anything you cannot undo, use the **hold button** (`HoldButton`): hold the mouse, Space or Enter for 1.2s. A fill of the text colour at 16% grows across the button. Let go early and it unwinds. Screen readers hear "Press and hold to confirm."
+- **Saving button**: a primary button that shows a 14px spinner while working, then turns `--success` with a check and "Saved".
+- **Segmented control** (`.segmented`): a pill track on `--bg-pop`, 3px padding, 2px between buttons. Buttons are 13px muted, padding `6px 12px`. The chosen one (`aria-pressed`) lifts onto `--bg-card` with `--text` and the card shadow. Use it to switch views (24h / 7d / 30d).
+- **Chips** (`.chip`): pills at least 30px tall, padding `4px 12px`, 13px muted text, clear ground, strong border, 6px apart. As toggles they use `aria-pressed`: on chips are `--text` on `--bg-pop`; off chips are 55% opacity and struck through.
+- **Switch** (`Switch`): 44 by 26px track (`--border-strong` off, accent on), white 20px thumb 3px from the edge with a small shadow. Has `role="switch"`. The label sits 12px to its right at 15px.
+- **Text field** (`.input`): `--bg-surface`, strong border, 12px corners, `9px 12px` padding, 14px. Focus: 2px accent outline, 1px away. Selects add 28px on the right for the arrow.
+- **Select in a toolbar** (`.select`): a pill on `--bg-card`, strong border, 14px, padding `8px 14px`.
+- **Forms**: `.form-grid` stacks fields 14px apart, at most 520px wide. Each `.field` is a 14px label over its input, 6px apart. `.actions` holds buttons 8px apart, wrapping. `.toolbar` holds filters 12px apart with muted 14px labels.
+- **Check box**: 18px with `accent-color: var(--accent)`, 10px from its label.
+- **Link in text**: accent text, weight 500, no underline until hover (offset 3px). Never browser blue.
 
 ## Status words (kit)
 
-- **Badge** (`.badge`): a pill on `--bg-pop` with an icon and a word, 13px weight 500. Tinted versions: `.badge-ok` (green on `--good-soft`), `.badge-warn` (amber on a 16% amber tint), `.badge-bad` (red on `--bad-soft`), `.badge-none` (muted icon).
-- **Kind pill** (`.kind`): a 12px pill on `--bg-pop` whose text colour says the kind (teal, accent, orange, red). The word always shows.
-- **Task chip** (`TaskChip` in `tasks.jsx`): shows one action you started. States: queued, running, done, failed, cancelled, each with an icon, a word and seconds. Running: a soft fill moves toward 90% and waits. Done: snaps full and turns green. Failed: stops, shakes once, turns red, shows why and offers Retry.
+- **Badge** (`.badge`): a pill on `--bg-pop` with an icon and a word (6px apart), 13px weight 500, padding `3px 10px 3px 8px`. Tinted versions: `.badge-ok` (green on `--good-soft`), `.badge-warn` (amber on a 16% amber tint), `.badge-bad` (red on `--bad-soft`), `.badge-none` (muted icon).
+- **Kind pill** (`.kind`): a 12px pill (weight 500, padding `2px 9px`) on `--bg-pop` whose text colour says the kind (teal, `--accent-text`, orange, red). The word always shows.
+- **Task chip** (`TaskChip` in `tasks.jsx`): shows one action you started. A pill on `--bg-pop` with a strong border, 13px, padding `7px 12px`. States: queued, running, done, failed, cancelled, each with an icon, a word and seconds. Running: an `--accent-soft` fill moves toward 90% and waits. Done: snaps full, turns `--good-soft` and green. Failed: stops, shakes once, turns `--bad-soft` and red, shows why on its own line and offers a 24px round Retry button.
 - **Progress bar** (`.progress`): 8px tall pill on `--gauge-off`, accent fill.
 
 ## Lists and tables (kit)
 
-- **Rows in a card** (`.activity`, `.queue`, `.app-list`): 1px `--border` lines between rows, 10px padding. A soft `--bg-pop` highlight slides between rows under the mouse (`useRowHighlight`).
-- **Table** (`Table` in `charts.jsx`): 14px, row lines, a 12px muted header row, rows tint to `--bg-pop` on hover. Headers are sort buttons with a faint sort icon. Wide tables scroll inside `.table-wrap`. An empty table shows an empty state.
-- **Label and value list** (`.facts`): two columns (`max-content 1fr`), muted labels. One column on phones.
-- **Disclosure rows** (pattern): a `<details>` row whose `summary` is a grid (badge, name, short reason, time, chevron). Hover: `--bg-pop`, 10px corners. The chevron turns over when open. Inside: items as `--bg-pop` tiles with 12px corners.
+- **Rows in a card** (`.activity`, `.queue`, `.app-list`): 1px `--border` lines between rows, 10px above and below each (16px for `.queue`). The first row has no line. A soft `--bg-pop` highlight (12px corners, 10px wider than the row on each side) slides between rows under the mouse: wrap the list in `.rows`, add one `<span class="row-glow">`, mark each row `data-row`, and spread `useRowHighlight()`'s props on the wrapper.
+- **Table** (`Table` in `charts.jsx`): 14px, cells padded `10px 12px`, 1px row lines, a 12px muted header row, the first cell of each row weight 500. Rows tint to `--bg-pop` on hover. Headers are sort buttons with a faint sort icon (full strength once sorted). A click sorts up, then down, then off. Wide tables scroll inside `.table-wrap`. An empty table shows an empty state.
+- **Label and value list** (`.facts`): two columns (`max-content 1fr`, gap `6px 16px`), 14px, muted labels. One column on phones.
+- **Disclosure rows** (pattern): a `<details>` row whose `summary` is a grid (badge, name, short reason, time, chevron) with fixed outer columns so every row lines up. Padding `12px 8px`, pulled out 8px each side. Hover: `--bg-pop`, 10px corners. The `--accent-text` chevron turns over when open. Inside: items as `--bg-pop` tiles with 12px corners, padding `10px 12px`, 6px apart. On phones the summary becomes `1fr auto` (badge and chevron on top, the rest full width below). Example: `web/src/demo/controls.css`.
 
 ## Charts (kit)
 
-Every chart has a "Show as table" disclosure (`.table-toggle`) or a sentence that says the same thing.
+Every chart has a "Show as table" disclosure (`.table-toggle`, 14px `--accent-text` summary) or a sentence that says the same thing.
 
-- **Bars** (`Bars`): columns with 8px corners. All bars are hatched (135° stripes of the series colour at 14% and 26%) except one, which is solid: the hovered bar, or the latest. Dashed gridlines. A one-line tooltip pill sits above the focused bar. Stacked parts have 3px gaps. Never make every bar solid.
-- **Gauge** (`Gauge`): an arc of round-ended segments, 6.5 stroke. On segments are accent, off are `--gauge-off`. The number sits in the middle at 32px. It has `role="img"` and a label.
-- **Heatmap** (`Heatmap`): a day-by-hour grid of 3px-corner cells in five steps (`--heat-0` to `--heat-4`), with a "Less … More" legend.
-- **Uptime strip** (`.uptime`): one 34px bar per day, 2px apart, green, amber, red or empty.
-- **Legend** (`.legend`): 10px swatches with 3px corners, 13px muted words.
+- **Bars** (`Bars`): columns with 8px corners, at most 56px wide, `clamp(2px, 0.6vw, 8px)` apart, 200px tall by default. All bars are hatched (135° stripes of the series colour: 5px at 14%, then 2px at 26%) except one, which is solid: the hovered bar, or the latest. Dashed gridlines at zero, half and top. Axis labels (12px muted) show the first, middle and last bar only; the scale (11px) sits on the left. A one-line tooltip pill (12px corners, `--bg-card`, strong border, 13px) sits 8px above the solid bar and moves inward near the ends. Stacked parts have 3px gaps. A legend shows only for two or more series. Never make every bar solid.
+- **Gauge** (`Gauge`): a 230° arc of 26 round-ended segments, 6.5 stroke, at most 260px wide. On segments are accent, off are `--gauge-off`. The number sits in the middle at 32px with a 13px muted line under it. It has `role="img"` and a label.
+- **Heatmap** (`Heatmap`): a day-by-hour grid (a 2.5rem day column, then 24 hour columns) of 3px-corner square cells, 3px apart (2px on phones), in five steps (`--heat-0` to `--heat-4`) set by quartile. Hour labels (11px) under it. Below: a sentence naming the busiest hour and a "Less … More" legend of 11px cells.
+- **Uptime strip** (`.uptime`): one 34px bar per day, 2px apart, green, amber, red, or empty (`--bg-pop` with a border). On phones 28px tall and 1px apart.
+- **Legend** (`.legend`): 10px swatches with 3px corners (round dots and 14 by 3px lines also exist), 13px muted words, `6px 16px` apart.
 
 ## Floating things (kit)
 
-- **Tooltip** (`Tip`): a dark pill (light text on `--text`), 12.5px, 10px corners. Opens after 500ms on hover or focus. Once one has been open, the next opens at once for 400ms. Escape closes it.
-- **Toast** (`useToast`): bottom right, 16px corners, icon, one line, maybe one action like Undo, and a close button. Stays 4s and pauses while hovered or focused. At most three. Alt+T jumps to the newest.
-- **Command palette** (`.palette`): a `<dialog>` 560px wide, 28px corners, 12vh from the top, dimmed backdrop. Big search field, list below. Ctrl+K opens it.
+- **Tooltip** (`Tip`): inverted colours (`--text` ground, `--bg-card` words), 12.5px weight 500, padding `6px 10px`, 10px corners, no shadow, 8px from its trigger (above by default; below for header buttons). Opens after 500ms on hover or focus. Once one has been open, the next opens at once for 400ms. Escape closes it.
+- **Toast** (`useToast`): bottom right, 20px from the edges, 360px wide, stacked 10px apart. Each is `--bg-card` with a strong border, 16px corners, padding `12px 12px 12px 14px`, 14px: an icon (green for good, red for bad), one line, maybe one action like Undo (13px weight 600 `--accent-text`), and a 26px round close button. Stays 4s and pauses while hovered or focused. Escape closes the focused one. At most three. Alt+T jumps to the newest.
+- **Command palette** (`.palette`): a `<dialog>` 560px wide, 28px corners, strong border, 12vh from the top, backdrop `rgba(6,7,11,.5)`. A 16px search field (padding `18px 20px`) over a list (8px padding, at most 50vh). Items are `10px 12px` with 12px corners; the chosen one is `--accent-text` on `--accent-soft`. Ctrl+K opens it.
 - **Dialog** (pattern): the same `.palette` box, up to 620px wide, at most the screen height minus 48px, 8vh from the top, scrolls inside, 22px padding. Clicking the backdrop closes it.
 
 ## Bigger patterns
 
 Build these from tokens exactly as described. Mycelium Ops has working examples in `web/src/demo/`.
 
-- **Intro strip** (`.start-strip`): a full-width card with a 35% accent border. Title and one line on the left, two or three buttons on the right. Shows on a first visit and can be hidden for good.
-- **Quick note box** (`.fb-card`): a full-width card with a dashed border at the bottom of a page. One line until clicked, then it grows. After sending, a green `--good-soft` thank-you replaces it.
-- **Guess tag** (`.assumed`): dashed outline and a tiny uppercase tag for a value that is a guess. When someone confirms it, the outline turns solid green. Use it for any value that is not yet known for sure.
-- **Calendar week** (`.week`): seven columns of at least 120px on `--bg-surface` trays. Events are small cards (`--bg-card`, 6px corners) with a coloured dot for the type, a time, a title and small lock or state chips. Waiting events have a dashed border. Press: 0.98.
-- **Rules legend**: when small chips carry meaning, explain them once in a legend strip above the list, not on every item.
-- **Plan or map canvas**: drawn on `--bg-void` with 20px corners. Areas are `--bg-card` shapes. Each kind of object has its own shape. A problem is red and has a word. The accent ring means only focus, selection or highlight. Labels have a halo in the card colour. On phones the canvas keeps its size and pans inside its own frame.
-- **Document tray**: a paper-like card (`--bg-card`) on a `--bg-pop` tray, with a heavy line under its header and a dashed box around quoted text. Notes about it sit on `--bg-pop` with a 3px coloured left line.
-- **Edit mode for cards**: a "Customise" button turns it on. Each card gets a tool row above it on `--bg-pop` (drag handle, Move up, Move down, Wide, Hide; 36px buttons). Card content dims to 72% and stops responding. Cancel, Reset and Done sit in a bar at the top.
-- **Urgent mode**: when something urgent runs, the banner turns red (see `layout.md`), action rows are at least 48px tall, the person's name is in each button's label, and nothing animates.
+- **Intro strip** (`.start-strip`): a full-width card with a border of 35% accent mixed into `--border`. Two columns (`minmax(0, 1fr) minmax(0, 1.4fr)`, gap `16px 24px`): title and one line on the left, a few buttons (one primary) and a small "Hide this" link on the right. One column under 900px. Shows on a first visit and can be hidden for good.
+- **Quick note box** (`.fb-card`): a full-width card with a dashed border at the bottom of a page. One line until clicked, then it grows. After sending, a green `--good-soft` thank-you (12px corners) replaces it.
+- **Guess tag** (`.assumed`): a 1px dashed `--text-faint` outline (6px corners) around the value, plus a tiny tag (11px, weight 600, uppercase, on `--bg-pop`, dashed, 4px corners). When someone confirms it, the outline and tag turn solid green on `--good-soft`. Use it for any value that is not yet known for sure.
+- **Calendar week** (`.week`): seven columns of at least 120px (140px on phones), 8px apart, scrolling inside the card. Each day is a `--bg-surface` tray (10px corners, 6px padding, at least 80px tall). Events are small cards (`--bg-card`, 6px corners, padding `6px 8px`): a 7px coloured dot for the type and an 11px muted time, a 13px title, and small lock or state chips. Waiting events have a dashed border. Press: 0.98.
+- **Grid table** (pattern): a wide table of cells (a week of shifts, a permission grid). At least 760px wide, scrolling inside `.table-wrap`. The first column sticks to the left on `--bg-card` (150px; 112 to 132px on phones; long names wrap). Cells are buttons at least 36px tall with 12px corners; hover `--bg-pop` only with a fine pointer. The whole grid is one Tab stop (`rules.md`). Example: `web/src/demo/roster.css`.
+- **Rules legend**: when small chips carry meaning, explain them once in a legend strip above the list (`--bg-surface`, 10px corners, 12px padding), not on every item.
+- **Steps row** (pattern): numbered pill buttons, 13px, padding `6px 12px 6px 6px`, each with a 22px number circle. Current: accent border on `--accent-soft`, white number on accent. Done: green number on `--good-soft`.
+- **Chat** (pattern): bubbles with 20px corners, padding `12px 14px`, at most 75 characters wide, 10px apart. Yours: accent with white text, on the right. Replies: `--bg-pop`.
+- **Plan or map canvas**: drawn on `--bg-void` with 20px corners and 8px padding. A live map is 600px tall (400px on phones). Areas are `--bg-card` shapes with a 1.5px strong edge; inner areas are dashed on `--bg-pop`. Each kind of object has its own shape. A problem is red, dashed, and has a word. The `--accent-text` ring means only focus or selection (full) and hover (half). Labels are 14px muted with a 4px halo in the card colour. On phones the canvas keeps at least 640px, pans inside its own frame (12px corners), keeps 28px targets, and drops labels for objects that are fine.
+- **Document tray**: a paper-like card (`--bg-card`, 12px corners, card shadow, 22px padding, 13px text) on a `--bg-pop` tray (10px corners, 14px padding), with a 2px `--text` line under its header and a dashed box (6px corners) around quoted text. Notes about it sit on `--bg-pop` (12px corners) with a 3px coloured left line. In a list, the open item has a 3px accent bar inside its left edge.
+- **Edit mode for cards**: a "Customise" link turns it on. The greeting line then holds the bar: a hint, Add a card, Reset, Cancel and Done (primary). Done saves and shows a toast with Undo. Each card gets a tool row above it (`--bg-pop`, border, 12px corners, padding `8px 8px 8px 4px`, 8px below): a 36px drag handle, the card name, then 36px Move up and Move down icon buttons, Wide (pressed: accent) and Hide. Card content dims to 72% and stops responding (`inert`). The row wraps under 520px.
+- **Urgent mode**: when something urgent runs, the banner turns red (see `layout.md`), the status card gets a 4px red bar inside its left edge, action buttons are at least 48px tall and 96px wide at 15px, the person's name is in each button's label, and nothing animates.

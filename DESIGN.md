@@ -28,7 +28,7 @@ Every Mycelium product (Ops, Monitor, Commerce) looks, moves and resizes the sam
 2. Use tokens (`var(--accent)`), never raw colours.
 3. One accent per card. One solid bar per chart.
 4. Every page goes inside `<Page>`. Pages never animate themselves.
-5. Ease out only. Move only `translate`, `scale`, `transform` and `opacity`.
+5. Ease out only. Move only `translate`, `scale`, `rotate`, `transform` and `opacity` (exceptions in `motion.md`).
 6. Every control keeps its label at every width. Move it rather than shrink it to an icon.
 7. No sideways page scroll. Wide things scroll inside their own box.
 8. Status is never colour alone: add a word or an icon.

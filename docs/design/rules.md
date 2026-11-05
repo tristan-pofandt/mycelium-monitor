@@ -4,11 +4,11 @@
 
 - **Every picture has words.** Every chart has a "Show as table" or a sentence. Gauges have `role="img"` and a label. Purely decorative drawings are `aria-hidden`. Every map or plan has a list or table that holds the same facts.
 - **Never colour alone.** Every status has a word, and usually an icon too.
-- **Every control works with a keyboard.** Tab gets there; Enter or Space uses it; Escape closes things. Rows of tabs or buttons move with the arrow keys, Home and End (`rovingKeys`). A big map or plan is one Tab stop, then arrow keys move between its objects.
-- **Focus is easy to see:** a 2px `--accent-text` outline, 2px away from the edge (`:focus-visible`).
-- **Things that change are announced.** Toasts and counters use polite live regions. Do not announce more than once every 5s.
+- **Every control works with a keyboard.** Tab gets there; Enter or Space uses it; Escape closes things. In rows of tabs or buttons, Left and Right also move and Home and End jump to the ends (`rovingKeys`). A big map or plan is one Tab stop; those same keys move between its objects, and Enter or Space opens one. A grid of cells is one Tab stop too: all four arrows move, Home and End go to the row's ends, Ctrl+Home and Ctrl+End to the corners.
+- **Focus is easy to see:** a 2px `--accent-text` outline, 2px away from the edge, 6px corners (`:focus-visible`, set once in `tokens.css`). Text fields, grid cells and guess tags use a 2px `--accent` outline 1px away.
+- **Things that change are announced.** Toasts and counters use polite live regions. Do not announce more than once every 5s. A wall screen announces nothing.
 - **Contrast:** text reaches 4.5:1 on its background in both themes. Use the light-mode colour steps in `look.md`.
-- **Touch:** targets are at least 36-40px; rows you tap are 48px.
+- **Touch:** see the touch sizes in `layout.md`.
 - **Reduced motion:** see `motion.md`.
 - First thing on every page: a "Skip to content" link.
 
