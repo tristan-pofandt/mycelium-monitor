@@ -1,13 +1,16 @@
 // Sites: every site side by side, then one site in detail. A Site Manager sees only their own site.
+import { useState } from "react";
 import { useSearchParams } from "react-router";
 import { Bars, KpiTile } from "../../charts.jsx";
+import { Icon } from "../../icons.jsx";
 import { rovingKeys } from "../../ui.jsx";
 import { ENTITIES, OUTPUT, PEOPLE, PLACES, SITES, person, siteName } from "../data.js";
 import { useLiveSites, useRosterCoverage } from "../roster.js";
 import { WeatherLine } from "../weather.jsx";
 import { SourceNote } from "../bits.jsx";
 import { SiteMapReplay } from "../sitemap.jsx";
-import { usePersona } from "../store.js";
+import { useCan, usePersona } from "../store.js";
+import { TvSetup } from "../screens.jsx";
 
 const COLS = [
   ["oee", "OEE", "%", "plantdata", (v) => v < 75], ["downtime", "Unplanned downtime, 7 d", " h", "plantdata", (v) => v > 10],
@@ -73,12 +76,18 @@ function Detail({ id, view, setView, focus }) {
   const live = useLiveSites();
   const cov = useRosterCoverage(id);
   const s = live.find((x) => x.id === id);
+  const can = useCan();
+  const [tv, setTv] = useState(false); // the floor screen setup card (screens.jsx)
   const toggle = (
-    <div className="toolbar" style={{ gridColumn: "1 / -1" }}>
-      <div role="group" aria-label="Site view" className="segmented" onKeyDown={(e) => rovingKeys(e, "button")}>
-        {VIEWS.map((v) => <button key={v.id} type="button" aria-pressed={view === v.id} onClick={() => setView(v.id)}>{v.label}</button>)}
+    <>
+      <div className="toolbar" style={{ gridColumn: "1 / -1" }}>
+        <div role="group" aria-label="Site view" className="segmented" onKeyDown={(e) => rovingKeys(e, "button")}>
+          {VIEWS.map((v) => <button key={v.id} type="button" aria-pressed={view === v.id} onClick={() => setView(v.id)}>{v.label}</button>)}
+        </div>
+        {s && can("tv") && <button type="button" className="button" aria-expanded={tv} onClick={() => setTv((v) => !v)}><Icon name="tv" /><span>Open TV mode</span></button>}
       </div>
-    </div>
+      {tv && <TvSetup site={id} onClose={() => setTv(false)} />}
+    </>
   );
   if (!s) return <MapCard id={id} focus={focus} />; // the Brisbane office: a plan, no plant figures
   if (view === "map") return <>{toggle}<MapCard id={id} focus={focus} /></>;

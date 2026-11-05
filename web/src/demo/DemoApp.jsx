@@ -26,6 +26,7 @@ import Documents from "./pages/Documents.jsx";
 import Audit from "./pages/Audit.jsx";
 import Emergency from "./pages/Emergency.jsx";
 import MyData from "./pages/MyData.jsx";
+import Tv from "./pages/Tv.jsx";
 import { RollCallButton, RollCallDialog, RollCallLine } from "./rollcall.jsx";
 
 // cap: the permission (or any of several) a persona needs to see the page (Roles and permissions); pages without one are for everyone.
@@ -147,6 +148,7 @@ export default function DemoApp() {
     <Routes>
       <Route path="/" element={<Shell />} />
       <Route path="/devices" element={<Navigate to="/security?tab=cyber" replace />} />
+      <Route path="/tv" element={<Tv />} /> {/* a floor screen: outside the Shell, no header, banner or feedback box */}
       <Route path="/:page" element={<Shell />} />
     </Routes>
   );

@@ -14,7 +14,7 @@ review. It runs on a fictional company, **Brolga Industries**: 4 Queensland site
   permissions (with a person search to give anyone a role), Setup wizard (small and multi-site flows), Your systems, About.
 - **Person search** (`PersonSearch` in `web/src/demo/bits.jsx`): type a name, job or site and pick with the arrow keys and
   Enter. Used to give someone a role, hand over approvals and assign a task, instead of long dropdowns.
-- **Guesses:** 31 guesses about the real company's systems and structure (`web/src/demo/assumptions.js`), shown as dashed
+- **Guesses:** 40 guesses about the real company's systems and structure (`web/src/demo/assumptions.js`), shown as dashed
   "Our guess" tags. The main pages show what each role would see day to day, with no tags in the data: each page lists the
   systems its cards draw on once, in a "Where this page's data would come from" strip above the feedback box (`SourceNote`
   registers a source; `SourcesScope` in `feedback.jsx` collects and shows them). Prose names a system with `SystemName`, which
@@ -27,6 +27,37 @@ review. It runs on a fictional company, **Brolga Industries**: 4 Queensland site
   dismissed. **How it works** (`/about`) has the guide and a **For IT** section (`/about#it`) on how a real deployment would run.
 - **Showcase:** the calendar labels who can change each event (Locked / Ask first / Anyone can move) with a legend, and shows
   staff their own shifts; the team map is a radial tree with labels that thin out with depth.
+- **Added 5 Nov** (plan: `docs/demo-features-plan.md`; built by parallel Claude Code agents, human review required):
+  - **Skills** (People → Skills): who holds which machine ticket, when it runs out, and which shift will have no certified
+    operator (Toowoomba's afternoon shift loses its last crane ticket in two days).
+  - **Rosters** (`/rosters`): plan this week and next, checked live against 10 hours' rest, a 48-hour week, leave, headcount,
+    machine tickets and weather. "Fill gaps" only suggests. A supervisor's roster goes to the Site Manager before a simulated
+    hand-off to the rostering system; the GM sees coverage only. Sites and Home read coverage live from it.
+  - **Permits to work** (Security and Work): hot-work, confined-space and isolation permits, issued only to people in scope
+    with a current ticket. Door activity marks each read at a restricted door Valid, None or Expired, and a card entering
+    Tank 2 with no permit raises an alert. Alert only; changing door access groups would need approval.
+  - **Site map** (Sites → a site → Map, and on Security): doors, cameras, alarms and machines with live states, people per
+    area counted from card reads, and a 24-hour replay with jumps to the seeded incidents. Every alert has "Show on map".
+    Setup gains a simulated floor-plan step.
+  - **Weather and roads** (every Home, Sites, Rosters): Bureau of Meteorology-style warnings and QLDTraffic-style closures.
+    People who may be cut off are counted by home postcode, only with their consent: the GM sees counts, a supervisor their
+    own team's names, an employee only themselves, and they can opt out. Nothing is fetched.
+  - **Documents and tax** (`/documents`, GM): about 40 fictional invoices, receipts and logbooks. Over 95% sure goes straight
+    through, the rest wait for review, and duplicates and changed bank details are always flagged and never paid from the
+    document. The tax pack (BAS-style GST, spend by category, FBT logbook) exports as a CSV for a registered tax agent;
+    nothing is lodged.
+  - **Roll call** (header button, `emergency` permission): reconciles door reads, visitors, permit holders and the roster
+    with nobody counted twice. Wardens tick people off on a phone, the banner turns red on every page, and ending it writes
+    a report. Drills only.
+  - **Audit evidence** (`/audit`, header tool): ISO 9001, ISO 45001, ISO 27001 physical controls and the Essential Eight,
+    clause numbers and short titles only, with evidence computed live from the rest of the demo (Evidence found, Gap or
+    Stale). "An auditor is here" builds a Markdown summary and CSV with a SHA-256 hash per item. Roles can give a guest
+    auditor read-only access for a set time.
+  - **What we hold about you** (`/my-data`, everyone): each part of a person's record with its source, who can see it (from
+    the current grants) and how long it's kept; who opened their record; what is never collected; correction requests to
+    HR; a JSON download.
+  - Seven new permissions (roster, permits, emergency, finance, audit, tv, layouts). Browsers that saved the old grants get
+    the new ones on their next visit (`store.js`, `seenCaps`).
 - **Safety cues:** destructive security actions are hold-to-confirm, decisions and actions toast with Undo, and Roles and
   permissions shows an audit trail of every change made in the demo.
 - **Installable:** like the main site, the demo installs as an app on a PC (Chrome or Edge: the install icon in the address

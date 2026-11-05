@@ -39,6 +39,8 @@ function load() {
 }
 let state = load();
 const subs = new Set();
+// Another window of the demo saved (a floor screen opened from Sites, or a roll call started in another tab): follow it.
+globalThis.addEventListener?.("storage", (e) => { if (e.key === KEY) { state = load(); subs.forEach((f) => f()); } });
 
 export function update(fn) {
   state = { ...state, ...fn(state) };

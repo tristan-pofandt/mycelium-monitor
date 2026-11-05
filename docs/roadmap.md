@@ -1,6 +1,6 @@
 # Mycelium roadmap
 
-**Status:** plan, updated 2026-11-04. Written from Tristan's notes of 31 Oct, 4 Nov (business-wide product) and 4 Nov (enterprise wedge); Reviewed. v1 (steps 1 to 9 of the original build, see [architecture.md](architecture.md)) is done and running on the homelab. This file covers everything after it.
+**Status:** plan, updated 2026-11-05. Written from Tristan's notes of 31 Oct, 4 Nov (business-wide product) and 4 Nov (enterprise wedge); Reviewed. v1 (steps 1 to 9 of the original build, see [architecture.md](architecture.md)) is done and running on the homelab. This file covers everything after it.
 
 ## Direction (2026-11-04)
 
@@ -222,7 +222,7 @@ Each phase ends in something usable. Effort: S is about a day, M a few days, L a
 |---|---|---|---|
 | A.1 Interviews | Sessions with the design partner: systems each site uses (ERP, HR and payroll, rostering, ticketing, maintenance, access control, cameras, visitors), the morning routine, reports built by hand, what needs approval and from whom, differences between sites, physical security incidents and audits, what corporate IT would require. Notes keep no names or quotes. | A one-page problem statement and top-10 needs the partner agrees with | S |
 | A.2 Personas | GM Operations, site manager, supervisor, employee, security officer, IT admin | Each persona has its top tasks and the data it needs | S |
-| A.3 Demo company | A fictional multi-site manufacturer (about 4 sites, 3 entities, 600 staff) with generated people, rosters, tasks, incidents, door and visitor events. **Prototype done 2026-11-04:** `demo/` (see `demo/README.md`), a clickable front-end demo of phases C, E, F, G and H on this data, with six role views, 31 marked assumptions reviewers can correct, and feedback boxes on every page | The design partner and their IT team review the prototype and their feedback is logged | M |
+| A.3 Demo company | A fictional multi-site manufacturer (about 4 sites, 3 entities, 600 staff) with generated people, rosters, tasks, incidents, door and visitor events. **Prototype done 2026-11-04:** `demo/` (see `demo/README.md`), a clickable front-end demo of phases C, E, F, G and H on this data, with six role views, 40 marked assumptions reviewers can correct (eleven features added 2026-11-05, see [demo-features-plan.md](demo-features-plan.md)), and feedback boxes on every page | The design partner and their IT team review the prototype and their feedback is logged | M |
 
 ### Phase B: enterprise foundation
 
@@ -233,6 +233,7 @@ Each phase ends in something usable. Effort: S is about a day, M a few days, L a
 | B.3 Roles and scopes | Capability grid per role, role × scope assignments, field-level hiding, "view as", "why can they see this" | A supervisor sees only their team, and the explanation matches (tests) | L |
 | B.4 SSO and SCIM | OIDC and SAML (a test Entra ID tenant), SCIM users and groups, group-to-role mapping, passkeys | A test tenant's users sign in and their managers build the hierarchy | M |
 | B.5 Delegation and audit | Delegation with expiry, acting roles, tamper-evident audit (hash chain, verified on export), access reviews | Editing an audit row is detected; an expired delegation stops working | M |
+| B.6 Staff data access | Each person sees what is held about them, its source, who can see it, how long it is kept and who opened their record; correction requests to HR; export. **Shown in the demo 2026-11-05** (`/my-data`) | A staff member downloads their record and it matches what HR holds | S |
 
 ### Phase C: role-based app
 
@@ -244,6 +245,7 @@ Each phase ends in something usable. Effort: S is about a day, M a few days, L a
 | C.4 Phone and PWA | Phone layout with the bottom tab bar; manifest, icons, a service worker for the app shell only (never API data); web push. **Manifest, icons and service worker done 2026-11-05** (see architecture.md, "Installable app"); the bottom tab bar and web push remain | "Install" appears in Chrome, Edge and Safari; an approval works one-handed | M |
 | C.5 Screen-reader pass | NVDA over the role homes, approvals and calendar (the deferred step 0.3) | Findings fixed or listed | S |
 | C.6 First demo | Walk the design partner through the demo company | Feedback logged and the order of E and F confirmed | S |
+| C.7 Customisable Home and TV mode | Card registry with role default layouts; each person reorders, resizes, hides and adds cards their permissions allow; a full-screen floor display with no personal data that a roll call takes over. **Shown in the demo 2026-11-05** | A site manager sets a default Home for supervisors; a floor TV runs a shift without names on screen | M |
 
 ### Phase D: connector framework
 
@@ -262,6 +264,8 @@ Each phase ends in something usable. Effort: S is about a day, M a few days, L a
 | E.1 Site comparison | KPIs per site from A.1 (likely OEE, downtime, incidents, maintenance, quality, deliveries, roster coverage) | The design partner says they'd check it every morning | M |
 | E.2 Data in | CSV drops first, then the maintenance system or historian through the site gateway (F.1) | One real-format export (with demo values) loads cleanly | M |
 | E.3 Daily brief and alerts | A brief per site and per person; alerts by email, push or ntfy, with quiet hours | A test alert reaches the phone | S |
+| E.4 Rosters and skills | Plan rosters in Mycelium against rest, hours, leave, headcount and machine tickets, then hand off to the rostering system through one approved action; a skills matrix that flags shifts with no certified operator. **Shown in the demo 2026-11-05** | A supervisor's roster reaches the rostering system after the site manager approves it | L |
+| E.5 Weather and roads | Bureau of Meteorology warnings and QLDTraffic closures per site; commute risk by home postcode for staff who opt in, feeding the roster. Check both sources' terms of reuse. **Shown in the demo 2026-11-05** (fictional data) | A flood watch flags the next day's shift with names only for the person's own supervisor | M |
 
 ### Phase F: physical security
 
@@ -272,7 +276,9 @@ Each phase ends in something usable. Effort: S is about a day, M a few days, L a
 | F.3 Visitors | SwipedOn or Envoy, or built-in sign-in; evacuation list | A visitor signs in on a phone and the host is notified | M |
 | F.4 Cameras and alarms | Camera health and events, alarm panel events, patrol tours | A camera going offline raises an alert with a link to the camera system | M |
 | F.5 Inspections and policies | Scheduled phone checklists with photos; a policies view with evidence; device lock compliance from Intune | Overdue comms-room inspections show per site | M |
-| F.6 Sites lens | A map lens of sites, doors, cameras and rooms | Door events pulse on the sites lens, with a table equivalent | M |
+| F.6 Sites lens | A map lens of sites, doors, cameras and rooms. **Shown in the demo 2026-11-05** as a schematic floor plan per site with live states and a 24-hour replay | Door events pulse on the sites lens, with a table equivalent | M |
+| F.7 Permits to work | Hot-work, confined-space and isolation permits linked to work orders, tickets and restricted doors; alerts on entry without a valid permit; optionally an approved action that adds holders' cards to the area's access group for the permit window (decision 3). **Shown in the demo 2026-11-05** | An entry without a permit raises an alert within a minute | M |
+| F.8 Emergency roll call | Who is on site from door reads, visitor sign-ins, permit holders and the roster; wardens tick people off on phones; a report into the audit trail and audit evidence. **Shown in the demo 2026-11-05** (drills only) | A drill at one site ends with everyone accounted for and a report | M |
 
 ### Phase G: setup wizard
 
@@ -306,8 +312,8 @@ Prioritised from pilot feedback. Each is a set of collectors and panels from the
 | Step | Contents | Effort |
 |---|---|---|
 | J.1 Cyber security centre | Security ledger, threat feed (`auth`, `ratelimit` and `security` event kinds), posture checks, more allow-listed actions; host agent for devices without Intune | L |
-| J.2 Compliance app | A separate plug-in app (decision 5): control library as data, evidence mapping, reports (OSCAL, PDF or Markdown); Essential Eight and site evidence first, then ISO 27001 and WHS | L |
-| J.3 Documents and money | Capture, extraction, review queue, matching, money map, finance packs | L |
+| J.2 Compliance app | **Shown in the demo 2026-11-05** (`/audit`: evidence, gap or stale per control, a pack with a hash per item, guest auditor access). A separate plug-in app (decision 5): control library as data, evidence mapping, reports (OSCAL, PDF or Markdown); Essential Eight and site evidence first, then ISO 27001 and WHS | L |
+| J.3 Documents and money | **Shown in the demo 2026-11-05** (`/documents`: watched folders, review queue, tax pack for the agent). Capture, extraction, review queue, matching, money map, finance packs | L |
 | J.4 CO₂ | Scope 1, 2 and 3 estimates from bills, receipts and spend; supplier questionnaire answers | M |
 | J.5 Small business and online sellers | Sales connectors, store audit, product research, marketing calendar | L |
 | J.6 Software monitoring | Node emitter, game connectors, generic OpenTelemetry, `mycelium scan` and its pull requests, the policy pack | L |
