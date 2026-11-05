@@ -6,7 +6,7 @@ umask 077
 mkdir -p /opt/mycelium
 cd /opt/mycelium
 
-[ -d repo/.git ] || git clone -q https://github.com/tristan-pofandt/mycelium.git repo
+[ -d repo/.git ] || git clone -q https://github.com/tristan-pofandt/mycelium-monitor.git repo
 
 if [ ! -f mycelium.env ]; then
     owner=$(tailscale status --json | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["User"][str(d["Self"]["UserID"])]["LoginName"])')

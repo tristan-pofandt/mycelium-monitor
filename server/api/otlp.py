@@ -2,7 +2,7 @@
 
 Allowlist only: user.email, user.id, account and organisation ids, prompts, tool input and error text are never kept.
 Cost comes from api_request log events (one per model call); the cost and token metrics would double count it, so they are ignored.
-See docs/claude-code-formats.md.
+See hooks/claude/README.md for what Claude Code sends.
 """
 import time
 

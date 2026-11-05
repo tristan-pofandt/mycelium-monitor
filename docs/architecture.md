@@ -1,186 +1,103 @@
-# Mycelium architecture
+# How Mycelium Monitor works
 
-Mycelium is a monitoring hub for several apps at once. It shows status, uptime, costs, usage and API calls for each app and for all apps combined, lets the owner manage an app's access from one place, and draws a live, Obsidian-style map of every file, data store, endpoint and external API, with a pulse running along a line each time Claude or the app reads or writes something.
+Mycelium Monitor watches several apps at once. For each app, and for all of them together, it shows whether the app is up, what it costs, how much it is used and which APIs it calls. The owner can change an app's admin settings from one place. A live map shows every file, data store, web address and outside API, and a dot runs along a line each time Claude Code or the app reads or writes something.
 
-Reroute is the first app. Nothing here is Reroute-specific: an app is connected by giving it an ingest key and, optionally, an admin endpoint.
+Reroute is the first app. Nothing is special to Reroute: any app joins with an ingest key and, if it wants, an admin address.
 
-**Status:** spec, 2026-10-30. Written with Claude Code; needs human review.
+Written with Claude Code; a person needs to review it.
 
-## Principles
+## Big rules
 
-- **Same feel as Reroute.** React, Vite and framer-motion, with Reroute's `choreography.js` timings and its "Night Dispatcher" tokens (dark first, Inter, ease-out only, leaving faster than arriving, transform and opacity only, reduced motion honoured).
-- **Small and boring back end.** Flask, SQLite (WAL) and server-sent events. One process is enough for one owner and a handful of apps.
-- **Extensible by registration.** A new feature is one collector on the server and one panel in the web app (see [Adding a feature](#adding-a-feature)).
-- **Private by default.** The repository is public; the running site is not (see [Security](#security)).
-- **Never store content or secrets.** Events carry paths, sizes, timings and counts, never file contents, request bodies, tokens or personal data.
+- **Same look and feel as every Mycelium site.** See `DESIGN.md` and `docs/design/`.
+- **Small, boring back end.** Flask, one SQLite file (WAL), and server-sent events. One process is enough.
+- **Add a feature as one collector plus one panel** (see the end of this file).
+- **The site is private; the code is public.**
+- **Never store contents or secrets.** Events hold paths, sizes, times and counts. Never file contents, request bodies, tokens, keys or personal data.
 
-## Concepts
+## Words
 
-| Term | Meaning |
+| Word | Meaning |
 |---|---|
-| App | A monitored application: slug, name, base URL, repository root, ingest key (stored hashed), optional admin URL and admin token (server-side env, never sent to the browser). |
-| Source | Who produced an event: `app` (the app's own emitter), `claude` (Claude Code hooks and telemetry), `probe` (Mycelium's own checks), `collector` (data Mycelium pulls). |
-| Node | Something on the map. Kinds: `file`, `store` (database, cache file), `endpoint` (HTTP route), `external` (third-party API), `actor` (Claude, a user group, the app process). Id is `kind:path`, for example `file:apps/plan-b-mvp/rides.py` or `store:data/rides.sqlite3`. |
-| Edge | A relation between two nodes. Static edges come from the code graph (imports, calls); runtime edges come from events (`rides.py` writes `rides.sqlite3`). |
-| Event | One thing that happened, in the format below. |
+| App | A watched app: slug, name, base URL, repo folder, ingest key (stored hashed), maybe an admin URL and admin token (token only in the server's environment). |
+| Source | Who sent an event: `app`, `claude` (Claude Code), `probe` (Mycelium's own checks), `collector` (data Mycelium pulls). |
+| Node | A thing on the map: `file`, `folder`, `store`, `endpoint`, `external`, `config`, `actor`. Its id is `kind:path`, like `file:apps/plan-b-mvp/rides.py`. |
+| Edge | A line between two nodes. Static edges come from scanning the code. Runtime edges come from events. |
 
-## Event format
+## One event
 
 ```json
-{
-  "ts": "2026-10-30T07:39:34.120Z",
-  "app": "reroute",
-  "source": "app",
-  "kind": "write",
-  "actor": "actor:app",
-  "node": "file:apps/plan-b-mvp/rides.py",
-  "target": "store:data/rides.sqlite3",
-  "status": "ok",
-  "duration_ms": 3.2,
-  "bytes": 412,
-  "usd": 0,
-  "meta": {"op": "report"}
-}
+{"ts": "2026-10-30T07:39:34.120Z", "app": "reroute", "source": "app", "kind": "write", "actor": "actor:app",
+ "node": "file:apps/plan-b-mvp/rides.py", "target": "store:data/rides.sqlite3", "status": "ok",
+ "duration_ms": 3.2, "bytes": 412, "usd": 0, "meta": {"op": "report"}}
 ```
 
-`kind` is one of `request`, `read`, `write`, `external`, `probe`, `cost`, `admin`, `log`. Unknown fields go in `meta` (at most 2 KB). The server rejects events with a `ts` more than 10 minutes in the future and stamps its own receive time.
+`kind` is `request`, `read`, `write`, `external`, `probe`, `cost`, `admin` or `log`. Extra fields go in `meta` (2 KB at most). An event more than 10 minutes in the future is refused. The server adds its own receive time.
 
-## Data flow
+## How data gets in
 
 ```mermaid
 flowchart LR
-  subgraph Apps
-    R[Reroute emitter] -->|POST /ingest/events| I
-    C[Claude Code hooks] -->|POST /ingest/events| I
-    O[Claude Code OpenTelemetry] -->|POST /v1/logs, /v1/metrics| I
-  end
-  P[Probes: /healthz, /readyz] --> I
-  U[Collectors: /admin/usage] --> I
-  I[Ingest] --> DB[(SQLite)]
-  I --> B[Live bus]
-  B -->|SSE /api/stream| W[Web app]
+  R[App emitter] -->|POST /ingest/events| I[Ingest]
+  C[Claude Code hook] -->|POST /ingest/events| I
+  O[Claude Code telemetry] -->|POST /v1/logs, /v1/metrics| I
+  P[Probes] --> I
+  U[Collectors] --> I
+  S[Code scan] -->|POST /ingest/graph| DB
+  I --> DB[(SQLite)]
+  I --> B[Live bus] -->|SSE /api/stream| W[Web app]
   DB -->|REST /api/*| W
-  W -->|admin actions| A[Admin proxy] -->|server-side token| R2[App admin API]
+  W -->|admin actions| A[Admin proxy] -->|token added on the server| R2[App admin API]
 ```
 
-### Getting data in
+- **Emitter** (`emitters/python/mycelium_emitter.py`): one file, standard library only. It does nothing unless `MYCELIUM_URL` and `MYCELIUM_KEY` are set. It queues events (drops the oldest past 10,000) and sends them every 2s or every 200. If Mycelium is down it drops the batch; it never slows the app. Tools: `init_telemetry(app)` (one `request` per HTTP request, using the route rule, not the URL), `emit(...)`, `timed(kind, node, target)` for outside calls, `watch_sqlite(conn, node, store)` (read or write from the first SQL word; SQL text is never sent). Reroute keeps an identical copy in `apps/plan-b-mvp/`.
+- **Claude Code hook** (`hooks/claude/`): sends the tool name, the path inside the repo and the time taken, for Read, Glob and Grep (`read`) and Edit, Write and NotebookEdit (`write`). Paths outside a registered repo are dropped on your computer.
+- **Claude Code telemetry** (`server/api/otlp.py`): `POST /v1/logs` and `/v1/metrics`, JSON only (protobuf gets 415), using the app's ingest key. `api_request` and `api_error` logs become `external` events to `external:anthropic-api` with cost, time, model and token counts. Metrics keep only session, lines-of-code, commit and pull-request counts (cost metrics would count twice). Only listed attributes are kept, so emails, user ids, prompts and error text are never stored.
+- **Probes** (`server/collectors/probes.py`): health every 60s, readiness every 5 min. Uptime comes from these.
+- **Collectors** (`server/collectors/`): pull data an app already offers, like Reroute's `/admin/usage` every 5 min, with the admin token from `MYCELIUM_ADMIN_TOKEN_<SLUG>`. A scheduler thread runs them; `MYCELIUM_SCHEDULER=0` turns it off.
+- **Code scan** (`emitters/python/mycelium_scan.py`): reads a repo (Python `ast` and patterns for JS, HTML, CSS; no AI) and sends only names and links: imports, tests, routes to handler files, front-end calls to routes, code to data stores and outside hosts, config variable names (never values), and folders. Each push replaces that app's static links. Limits: links are per file, not per function; routes made at run time are missed.
 
-- **App emitter.** A single small module per app that queues events and posts them in batches (every 2 s or 200 events) with `Authorization: Bearer <ingest key>`. It never blocks a request, and drops events if Mycelium is down. For Reroute it hooks `before_request` and `after_request`, `google_api.record_request` (every billable call), the one fetch helper of each external API, and the read and write functions of the six data stores (`rides.sqlite3`, `accounts.db`, `push.json`, GTFS `index.json`, OSM cache, `vapid.json` reads as a name only).
-- **Claude Code hooks.** A `PostToolUse` hook for `Read`, `Edit`, `Write`, `NotebookEdit`, `Glob` and `Grep` sends the tool name and the file path, relative to the repository it belongs to. Paths outside a registered app's repository root are dropped on the client, so nothing else on the computer is reported.
-- **Claude Code telemetry.** Claude Code's OpenTelemetry export (OTLP over HTTP, JSON) gives token use, cost, sessions and API requests. Mycelium accepts the OTLP logs and metrics endpoints directly; the ingest key goes in `OTEL_EXPORTER_OTLP_HEADERS`.
-- **Probes.** Mycelium checks each app's health URL every 60 s and readiness URL every 5 min, recording status code and latency. Uptime is computed from these.
-- **Collectors.** Pull data an app already exposes, for example Reroute's `/admin/usage` (Google API cost estimates) every 5 min, using the admin token held in Mycelium's environment.
+## Storage
 
-### Storage
+One SQLite file (`MYCELIUM_DB`, default `server/data/mycelium.sqlite3`). Tables: `apps`, `events` (raw, kept 30 days), `rollups` (per app per hour and day; kept forever), `probes`, `nodes`, `edges`, `audit`, `settings`. An hourly job rolls up and prunes. Ingest takes up to 500 events per batch and 6,000 per key per minute; the app always comes from the key.
 
-SQLite in WAL mode, one file. Tables: `apps`, `events` (raw, kept 30 days), `rollups` (per app, per hour and per day: requests, errors, p50 and p95 latency, reads, writes, external calls, cost; kept forever), `probes`, `nodes`, `edges`, `audit` (every admin action), `settings`. An hourly job rolls up and prunes.
+## Live stream
 
-### Live stream
+`GET /api/stream?app=<slug>` sends each new event to the browser, at most 50 a second per browser. Extra events are counted and reported as a `dropped` event.
 
-`GET /api/stream?app=<slug>` is a server-sent event stream. The ingest step publishes each accepted event to an in-memory bus; each connected browser gets the events for the apps it watches, at most 50 per second (extra events are counted, not sent).
+## Reading data
 
-## The map
+`GET /api/apps`, `/api/summary` (with the previous 24 hours), `/api/activity`, `/api/uptime`, `/api/costs`, `/api/usage`, `/api/events` (filters `kind`, `source`, `paid`; paging with `before`), `/api/graph`. Each takes `?app=<slug>` or covers all apps. Key hashes and admin tokens are never returned. Daily API cost is the larger of live cost events and the pulled usage figure, not both added. 24-hour figures come from raw events (shortcut; switch to rollups if volume grows).
 
-- **Base graph.** Built from the app's repository by `emitters/python/mycelium_scan.py` (standard library only: Python `ast` plus patterns for JS, HTML and CSS; no LLM step) and pushed to `POST /ingest/graph` with the app's ingest key (`python mycelium_scan.py <repo> --url <mycelium> --key <key>`; each push replaces the app's static links). Only names and relations are sent. Nodes: `file`, `folder`, `endpoint`, `store`, `external`, `config` (environment variable names, never values) and `actor`. Links: `import`, `tests` (test file to what it imports), `route` (endpoint to the file that handles it), `calls` (front-end code to the endpoints it fetches, and code to external hosts), `uses` (code to data stores), `config`, `contains` (folder to child, so nothing is left alone) and `serves`/`runs` (the app to its endpoints and root). Ids match the runtime ones, so live events pulse along these links, and a `request` event also pulses on from its endpoint to its handler file. Limits: links are file level (not function level), routes added dynamically are missed, and a data store is found only where the code names it or declares its `store:` id.
-- **Runtime layer.** Each event adds or updates nodes and runtime edges, so data stores, endpoints and external APIs appear as soon as they are used.
-- **Rendering.** `force-graph` on a canvas: d3-force layout, zoom and pan, nodes sized by activity, clusters coloured by folder. Each live event calls `emitParticle` on its edge; the colour shows the kind (read teal, write indigo, external orange, error red) and the particle speed follows the choreography tokens. Reduced motion replaces moving particles with a brief highlight of the edge.
-- **Interaction.** Search, focus a node and its neighbours, filter by kind or source, a time scrubber to replay the last hour, and click-through to a node's history.
-- **Accessible alternative.** A table view with the same nodes, edges and recent activity, keyboard navigation of the graph (arrow keys move between neighbours, Enter opens details), and a polite live region that summarises activity every 10 s rather than per event.
+## The web app
 
-## Views
+- Routes are `/<app or all>/<panel>`. Panels: Overview, Live map, Status and uptime, Costs, Usage, API details, Transactions, Event log, plus Access and Settings as header tools. All are listed in `web/src/panels/index.js`; a panel hides when the app lacks something it `requires`.
+- Ctrl+K opens a palette to jump to any app or panel.
+- **Live map** (`web/src/panels/Map.jsx`): `force-graph` 1.52.0 on a canvas, loaded only when needed. Looks like Obsidian's graph: nodes sized by links, thin lines, labels fade in with zoom, hover keeps a node and its neighbours bright. Each live event sends a dot along its edge (read teal, write accent, outside orange, error red). Lines used in the last 60s carry faint slow dots. Colours are read once per theme; the canvas only redraws while something moves. Keyboard: Up and Down through nodes, Left and Right through neighbours, Enter for details, Escape to close. There is a Graph/Table switch, a Find box and a spoken summary every 10s. Not built yet: replaying the last hour, filters by source.
+- **Installable** (`web/public/`): a manifest, icons drawn from the `Logo` (redraw the PNGs if the logo changes) and `sw.js`, which caches only the app shell. API data and the stream never touch it. Offline, the app opens and says the server can't be reached. Installing needs HTTPS or localhost.
 
-| View | Shows |
-|---|---|
-| Overview | Combined status of all apps, total cost today and this month, requests, errors, uptime, top changes. |
-| App switcher | Command palette (Ctrl+K) and a sidebar list; the current app is in the URL. |
-| Status and uptime | Current health, 90-day uptime bars, incidents, probe latency. |
-| Costs | Cost per API and per day, Claude cost per session, projections against caps and budgets. |
-| Usage | Requests per route, active installs (counted, not identified), feature use. |
-| API details | Every external API: calls, errors, latency, cache hit rate, daily cap use. |
-| Transactions | Billable API calls as a ledger now; payment providers later. |
-| Live map | The graph above. |
-| Event log | Filterable, live-tailing list of events. |
-| Access | Admin actions for the app (below). |
-| Settings | Apps, keys, budgets, alert rules. |
+## Signing in and access
 
-## Access management
-
-Mycelium proxies admin actions to the app's own admin API; the admin token never leaves the server. Every action is written to `audit` with who, what and the response. For Reroute this starts with what already exists (moderation queue, approve, remove, ban, unban) and adds, in Reroute, admin endpoints for: reading and changing rate limits and daily caps at runtime, switching sign-in on or off, the ride board on or off, and revoking a user's sessions.
-
-## Security
-
-- **Running site is private.** Served through `tailscale serve` (tailnet only), not Funnel. The owner signs in; v1 trusts Tailscale's identity headers on the tailnet and adds a password fallback for local development.
-- **Ingest keys** are random, shown once, stored as hashes, and scoped to one app. Ingest is rate-limited per key.
-- **Admin tokens** for apps are environment variables on the Mycelium server, never stored in SQLite or sent to the browser.
-- **No content.** Events carry metadata only; the hook and emitters strip query strings, bodies and personal data. Client addresses are not stored.
-- **CSRF and headers.** Same-origin only, strict CSP, SameSite cookies, the same header set as Reroute.
-
-## Back end as built (step 4, 2026-10-31)
-
-- `server/db.py` schema and helpers; `server/api/ingest.py` (`POST /ingest/events`, key in `Authorization: Bearer`, max 500 events per batch, 6000 events per key per minute, the app always comes from the key); `server/bus.py` and `server/api/stream.py` (`GET /api/stream?app=`, 50 events per second per client, a `dropped` event reports the count).
-- `server/collectors/`: `probes.py` (health 60 s, readiness 5 min) and `reroute_usage.py` (5 min; token from env `MYCELIUM_ADMIN_TOKEN_<SLUG>`). A scheduler thread runs them and the hourly job; set `MYCELIUM_SCHEDULER=0` to disable.
-- Register an app with `python manage.py add-app <slug> <name> --health-url ...`; it prints the ingest key once. Database path: `MYCELIUM_DB` (default `server/data/mycelium.sqlite3`).
-- Not built yet: the read API for the web app (`/api/apps`, rollups, probes), owner login, OTLP endpoints (step 5).
-
-## Emitter as built (step 5, 2026-10-31)
-
-- `emitters/python/mycelium_emitter.py`: one file, standard library only, a no-op unless `MYCELIUM_URL` and `MYCELIUM_KEY` are set. It queues events (oldest dropped beyond 10,000), posts every 2 s or at 200, and drops a batch if Mycelium is unreachable. API: `init_telemetry(app)` (one `request` event per HTTP request, route rule not URL), `emit(...)`, `timed(kind, node, target)` for external calls, `watch_sqlite(conn, node, store)` (read or write per statement from the first SQL keyword; SQL text is never sent).
-- Reroute copies the file into `apps/plan-b-mvp/` (keep the copies identical). It emits: requests; `cost` per billable Google request (`google_api.record_request`); `external` for Google, Open-Meteo, Translink realtime and static, QLDTraffic, weather, Overpass, sign-in providers and the alert webhook; reads and writes of `rides.sqlite3`, `accounts.db`, `push.json`, `vapid.json` (name only), `gtfs/index.json` and the OSM cache (one node, since the file name holds a location). Map nodes are repo-relative (`file:apps/plan-b-mvp/rides.py`).
-- Known gaps: SQLite statements run while the app is being built (before `init_telemetry`) are not reported; the Google cost target is `external:<API name>` while the call target is `external:<host>`, so they are two nodes.
-- Claude Code formats for the hook and OTLP endpoints are in `docs/claude-code-formats.md`.
-- Claude Code hook (`hooks/claude/`): `mycelium_hook.py` maps Read, Glob and Grep to `read` and Edit, Write and NotebookEdit to `write`, with `actor:claude` and the repo-relative `file:` node. Config lives in `~/.mycelium/hook.json` (URL, and a repo root and ingest key per app), outside every repo. It runs `async` and always exits 0. For now it shares the app's ingest key.
-- OTLP (`server/api/otlp.py`): `POST /v1/logs` and `/v1/metrics`, http/json only (protobuf gets 415), authenticated by the app's ingest key. `api_request` logs become `external` events from `actor:claude` to `external:anthropic-api` with `usd`, duration, model, token counts and `session.id`; `api_error` logs become the same with status `error`. Metrics keep only session, lines-of-code, commit and pull-request counts as `log` events: cost and token metrics would double count the logs. Attributes are allowlisted, so `user.email`, `user.id`, account and organisation ids, prompts and error text are never stored. Checked on 2026-10-31 with a real `claude -p` run (Claude Code 2.1.314).
-- Checked end to end on 2026-10-31 against a local server: a hook event and Reroute request events arrived on `/api/stream` over HTTP, a read outside the repo was dropped, and no query string or tool input leaked.
-
-## Front end as built (step 6, 2026-10-31)
-
-- Read API (`server/api/read.py`): `GET /api/apps`, `/api/summary`, `/api/uptime`, `/api/costs`, `/api/usage`, `/api/events` (filters `kind`, `source`, `paid`, paging with `before`), `/api/graph`. All take `?app=<slug>` or cover all apps. Key hashes and admin tokens are never returned. App API cost per day is the larger of the live cost events and the pulled `/admin/usage` figures, not their sum, since both describe the same calls. 24-hour figures come from raw events (a commented shortcut; switch to rollups if volume grows).
-- Web routes are `/<app or all>/<panel>`. The sidebar has an app selector and the panel list; Ctrl+K opens a command palette (a modal dialog with an ARIA combobox) to jump to any app or panel. Panels: Overview, Live map, Status and uptime, Costs, Usage, API details, Transactions, Event log. They are all registered in `web/src/panels/index.js`, and panels whose `requires` the app lacks are hidden.
-- Charts are plain elements (`web/src/charts.jsx`): stat tiles, a column chart (stacked for Claude Code against App APIs), and a 90-day uptime strip. Each has a "Show as table" equivalent; status always pairs colour with an icon and a word. Series colours `--series-1` and `--series-2` were checked with the dataviz palette validator for colour-blind separation and contrast on both themes.
-- Live map (`web/src/panels/Map.jsx`): `force-graph` 1.52.0, loaded on demand (its own 59 kB gzipped chunk). Each live event fires `emitParticle` on its edge, coloured by kind; with reduced motion the edge glows briefly instead. Nodes and edges first seen live are added in place. Accessible equivalents: a Graph/Table switch, a Find box, keyboard navigation (Up and Down through all nodes, Left and Right through neighbours, Enter for details, Escape to close), and a polite summary every 10 seconds.
-- Not built yet: the time scrubber for replaying the last hour, filtering the map by kind or source, the Access and Settings views (step 7), and owner login.
-
-## Access and sign-in as built (step 7, 2026-10-31)
-
-- **Owner sign-in** (`server/auth.py`): every `/api/` route needs the owner; `/ingest` and `/v1` keep using app keys. Ways in: Tailscale identity (`MYCELIUM_TRUST_TAILSCALE=1` and the `Tailscale-User-Login` header in `MYCELIUM_OWNER`, safe only when listening on 127.0.0.1 behind `tailscale serve`); a password (`MYCELIUM_PASSWORD`, a signed `HttpOnly`, `SameSite=Strict` cookie for 12 hours, set `MYCELIUM_SECRET_KEY` so sign-ins survive restarts, and `MYCELIUM_SECURE_COOKIE=1` over HTTPS); with neither set, this computer only (loopback) for development. Failed passwords are limited to 10 per 15 minutes per address. Sign-ins are audited without addresses.
-- **CSRF:** every state-changing `/api/` request must carry an `Origin` header matching the host.
-- **Admin proxy** (`server/api/admin.py`): `GET`/`POST /api/admin/<app>/settings`, `GET`/`POST /api/admin/<app>/moderation`, `POST /api/admin/<app>/sessions/revoke`, `GET /api/audit`. Mycelium adds the app's admin token (`MYCELIUM_ADMIN_TOKEN_<SLUG>`) on the server. Every change is audited with ids and status only; moderation text passes through to the owner's browser and is never stored. An app gets the `admin` capability only when it has an admin URL and a token set.
-- **The app side** is Reroute's admin protocol: `/admin/api/settings`, `/admin/api/sessions/revoke` (new in Reroute's `admin_api.py`) and the existing `/admin/moderation`. Another app joins by implementing the same paths.
-- **Web:** a sign-in screen, an Access panel (switches and caps, moderation queue, signing users out, audit log; switching something off, removing, banning and signing out ask for confirmation), and a Settings panel (who is signed in, sign out, registered apps).
-- Checked on 2026-10-31 against a local Reroute on the `feat/admin-api` branch: signing in, changing the plan cap, switching the ride board off and on (Reroute's `/api/rides` answered 404 while off), signing everyone out, and the audit log.
-- Not built: budgets and alert rules in Settings, adding apps or rotating keys from the browser, and persisting runtime changes in Reroute across restarts.
-
-## Polish (step 8, 2026-10-31)
-
-- **Map, modelled on Obsidian's graph view:** small nodes sized by their connections, thin faint links with small arrows, labels that fade in with zoom (Obsidian's text fade threshold), and hover or keyboard focus keeps a node and its neighbours bright while the rest dims (a 150 ms eased fade). Forces: gentle repulsion, short links and a pull to the centre (`forceX`/`forceY` from `d3-force-3d`, the copy force-graph uses) so clusters stay together. From Obsidian plugins: a local graph (neighbours to depth 1 or 2), filtering node kinds from the legend chips, and pinning a node by dragging it. Pulses run on time, not frames (700 ms, Reroute's ease-out), with a soft halo, and end in a ring on the node they reach.
-- **Performance:** colours are read from CSS once per theme (not per node per frame), halos are a second circle rather than canvas `shadowBlur`, the canvas only redraws continuously while a pulse, ring, glow or fade is on screen, and the event log adds live events in batches every 250 ms instead of re-rendering per event.
-- **Design and accessibility:** Inter is bundled with the app (`@fontsource-variable/inter`, so a private site makes no Google Fonts request); small text uses `--text-muted` because `--text-faint` is under 4.5:1 on dark cards (the token stays as in Reroute); light mode gets darker status and accent hues that reach 4.5:1 (Mycelium additions in `tokens.css`); themed selection, scrollbar, caret and form accents; a drawn SVG icon set (`web/src/icons.jsx`) replaces Unicode glyphs; the app name sits beside the page heading instead of above it; a skip link; two stat tiles per row and a compact sidebar on phones; the uptime strip fits a phone.
-- **Checked** in the browser pane: dark and light themes, phone width (no page scrolls sideways), hover dimming, pulses and rings, reduced motion (edge glow instead of pulses), the skip link, and the palette returning focus. The Impeccable detector found nothing. Not checked: a real screen reader (NVDA or VoiceOver), and axe (loading it from a CDN into the page was refused by the permission classifier).
-
-## Installable app (PWA, 2026-11-05)
-
-- `web/public/` holds `manifest.webmanifest` (standalone, start `/`), the mark as `icon.svg` plus PNGs at 192 and 512, a maskable 512 (full-bleed accent, mark in the safe zone) and a 180 `apple-touch-icon.png`. The PNGs are drawn from the `Logo` geometry in `web/src/icons.jsx`; redraw them if the mark changes.
-- `web/public/sw.js` caches the app shell only: navigations go to the network first, with the cached `/` when offline, and hashed `/assets/` files are cached on first use. `/api/`, the stream, `/healthz` and anything that isn't a same-origin `GET` never touch it. Offline, the installed app opens and says the server can't be reached. Registered in production builds only (`web/src/main.jsx`).
-- `theme-color` follows the system theme and, once the owner picks one, the picked theme (`web/src/theme.js`), so the phone's status bar matches.
-- Install needs HTTPS (or localhost): the tailnet site at `https://<host>.ts.net:8443` qualifies. Chrome and Edge show an install button in the address bar; on iPhone, Safari's Share › Add to Home Screen.
-- Checked in the browser pane against a local build: the manifest and every icon serve with the right type, the worker activates and controls the page, the cache holds only `/` and `/assets/`, and with the server stopped the app opens and shows the "can't be reached" message. Not checked: installing on a real phone or PC, or the install prompt itself.
+- **Owner sign-in** (`server/auth.py`): every `/api/` route needs the owner; `/ingest` and `/v1` use app keys. Ways in: Tailscale identity (`MYCELIUM_TRUST_TAILSCALE=1`, login listed in `MYCELIUM_OWNER`; only safe on 127.0.0.1 behind `tailscale serve`); a password (`MYCELIUM_PASSWORD`, a 12-hour cookie; set `MYCELIUM_SECRET_KEY` so sign-ins survive restarts and `MYCELIUM_SECURE_COOKIE=1` on HTTPS); or, with neither set, this computer only. Ten wrong passwords per 15 min per address, then a wait.
+- **Cross-site safety:** every changing `/api/` request must have an `Origin` that matches the host. Strict CSP and SameSite cookies.
+- **Admin proxy** (`server/api/admin.py`): `GET`/`POST /api/admin/<app>/settings` and `/moderation`, `POST /api/admin/<app>/sessions/revoke`, `GET /api/audit`. Mycelium adds the app's admin token on the server. Every change is written to `audit` (ids and status only). An app gets the `admin` capability only with an admin URL and a token. Another app joins by offering Reroute's paths: `/admin/api/settings`, `/admin/api/sessions/revoke`, `/admin/moderation`.
+- **Access panel:** switches and caps, the moderation queue, signing users out and the audit log. Destructive actions use the hold button.
 
 ## Adding a feature
 
-- **Server:** a collector is a module in `server/collectors/` that registers `name`, `interval` and `run(app)`; it returns events or rollup rows. A panel's data comes from `server/api/<feature>.py`.
-- **Web:** a panel is a module in `web/src/panels/` that exports `id`, `title`, `icon`, `requires` (the capabilities an app must have, for example `admin` or `costs`) and a component. The sidebar and command palette list panels automatically, and hide panels an app can't support.
+- **Server:** a collector in `server/collectors/` with `name`, `interval` and `run(app)`, returning events or rollup rows. Its data is read through `server/api/<feature>.py`.
+- **Web:** a panel in `web/src/panels/` registered in `index.js` with `id`, `title`, `short` (tab word), `icon`, `requires`, `component`, and `place: "tools"` for a header tool. Build it from the kit parts in `docs/design/parts.md`, and give every visual a table or text version.
 
-## Multi-user later
+## Later: more than one user
 
-The full plan after v1 (other users, connectors for games and sales, the setup kit, the AI analyst, the security centre, the host agent and RegTech) is in [roadmap.md](roadmap.md). Kept in mind, not built in v1: organisations that own apps, members with roles (owner, admin, viewer), email or OAuth sign-in, per-organisation ingest keys and quotas, and public onboarding (an emitter package per language and a Claude Code hook installer). The v1 tables already carry an `app` key everywhere, so adding an `org` column is a migration, not a rewrite.
+Kept in mind, not built: organisations that own apps, members with roles (owner, admin, viewer), email or OAuth sign-in, keys and limits per organisation, and an emitter per language. Every table already has an `app` key, so adding `org` is a migration, not a rewrite. The plan is in `roadmap.md`.
 
-## Repository layout
+## Folders
 
 ```
-server/            Flask app: ingest, api, stream, probes, collectors, admin proxy
-web/               React + Vite app (design tokens and choreography ported from Reroute)
-emitters/python/   Single-file emitter for Flask apps (Reroute uses this)
-hooks/claude/      Claude Code hook script and settings snippet
-infra/             Dockerfile and homelab notes
-docs/              This spec and feature logs
+server/            Flask: ingest, API, stream, probes, collectors, admin proxy
+web/               React + Vite (the shared Mycelium design kit plus the panels)
+emitters/python/   Emitter and code scan for Python apps
+hooks/claude/      Claude Code hook
+infra/             Dockerfile and homelab deploy
+docs/              This file, the roadmap and the design docs
 ```

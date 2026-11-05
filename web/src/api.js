@@ -1,14 +1,14 @@
 // Data hooks: REST reads from server/api/read.py and the live SSE stream (server/api/stream.py).
 import { useEffect, useRef, useState } from "react";
+import { useToast } from "./ui.jsx";
 
 const q = (app, params = {}) => new URLSearchParams({ app: app || "all", ...params }).toString();
 
 // useApi("/api/summary", app, { refresh: 30 }) -> { data, error, reload }
-export const ToastBridge = { use: () => () => {} }; // set by ui.jsx to its toast hook, so api.js needs no import cycle
 
 export function useApi(path, app, { params = {}, refresh = 0 } = {}) {
   const [state, setState] = useState({ data: null, error: null });
-  const toast = ToastBridge.use();
+  const toast = useToast();
   const [tick, setTick] = useState(0);
   const key = `${path}?${q(app, params)}`;
   useEffect(() => {

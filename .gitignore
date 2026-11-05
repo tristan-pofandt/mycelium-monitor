@@ -12,7 +12,6 @@ CLAUDE.local.md
 .claude/settings.local.json
 .impeccable/review/
 .impeccable/mocks/
-demo/feedback/
 .playwright-mcp/
 # Word exports (the demo overview holds the demo address and access code)
 *.docx

@@ -1,58 +1,24 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router";
 import { panelsFor } from "./panels/index.js";
 import { useApi } from "./api.js";
 import Palette from "./Palette.jsx";
 import Login from "./Login.jsx";
 import { Icon, Logo } from "./icons.jsx";
-import { useTheme } from "./theme.js";
 import Page from "./Page.jsx";
-import { edgesOf, movePill } from "./motion/pages.js";
 import { StatusBadge } from "./panels/Status.jsx";
 import { Picker, Tip, ToastProvider, rovingKeys } from "./ui.jsx";
+import { ThemeToggle, useMoreTabs, usePill } from "./shell.jsx";
 
 // Capabilities of the selected app; "all" gets the union, so a panel shows when any app supports it.
 const capsOf = (apps, slug) =>
   slug === "all" ? [...new Set(apps.flatMap((a) => a.capabilities))] : apps.find((a) => a.slug === slug)?.capabilities || [];
-
-export function ThemeToggle() {
-  const [theme, toggle] = useTheme();
-  const next = theme === "dark" ? "light" : "dark";
-  return (
-    <Tip label={`Switch to ${next} theme`} describe={false} side="bottom">
-      <button type="button" className="icon-button" onClick={(e) => toggle(e.currentTarget)} aria-label={`Switch to ${next} theme`}>
-        <Icon name={theme === "dark" ? "sun" : "moon"} />
-      </button>
-    </Tip>
-  );
-}
 
 // The state of the selected app (or the worst of all apps), always in the header.
 function overall(apps, slug) {
   const shown = slug === "all" ? apps : apps.filter((a) => a.slug === slug);
   if (shown.some((a) => a.status === "down")) return "down";
   return shown.length && shown.every((a) => a.status === "up") ? "up" : null;
-}
-
-// One accent pill behind the tabs that stretches to the active tab: leading edge first, trailing edge catching up.
-export function usePill(rowRef, pillRef, panel) {
-  const last = useRef(null);
-  useLayoutEffect(() => {
-    const place = (animate) => {
-      const row = rowRef.current, pill = pillRef.current, tab = row?.querySelector(".pill.active")?.parentElement; // the <li>: its offsets are in the row
-      if (!row || !pill) return;
-      if (!tab) { pill.style.visibility = "hidden"; last.current = null; return; } // a page outside the tabs (Access, Settings): no highlight
-      pill.style.visibility = "";
-      pill.style.width = `${row.scrollWidth}px`;
-      const to = edgesOf(row, tab);
-      movePill(pill, animate ? last.current : null, to);
-      last.current = to;
-    };
-    place(true);
-    const onResize = () => place(false);
-    addEventListener("resize", onResize);
-    return () => removeEventListener("resize", onResize);
-  }, [panel]);
 }
 
 function Shell({ apps }) {
@@ -82,6 +48,7 @@ function Shell({ apps }) {
   const appName = app === "all" ? "All apps" : apps.find((a) => a.slug === app)?.name || app;
   const nav = visible.filter((p) => p.place !== "tools");
   const tools = visible.filter((p) => p.place === "tools");
+  const more = useMoreTabs(rowRef, [nav.length, tools.length]); // fade the tab row's end only while tabs are hidden past it
   return (
     <div className="shell">
       <a href="#main" className="skip-link">Skip to content</a>
@@ -92,12 +59,15 @@ function Shell({ apps }) {
             options={[{ value: "all", label: "All apps" }, ...apps.map((a) => ({ value: a.slug, label: a.name }))]} />
         </div>
         <nav className="pills" aria-label="Panels">
-          <ul role="list" ref={rowRef} onKeyDown={(e) => rovingKeys(e, "a.pill")}>
+          <ul role="list" ref={rowRef} className={more ? "has-more" : undefined} onKeyDown={(e) => rovingKeys(e, "a.pill")}>
             <li className="pill-indicator" ref={pillRef} role="presentation" aria-hidden="true" />
             {nav.map((p) => (
               <li key={p.id}>
                 <NavLink to={`/${app}/${p.id}`} className="pill"><Icon name={p.icon} /><span>{p.short}</span></NavLink>
               </li>
+            ))}
+            {tools.map((p) => ( /* below 960px the header has no room for these, so they join the end of the tab row */
+              <li key={p.id} className="pill-tool"><NavLink to={`/${app}/${p.id}`} className="pill"><Icon name={p.icon} /><span>{p.short}</span></NavLink></li>
             ))}
           </ul>
         </nav>
@@ -113,9 +83,7 @@ function Shell({ apps }) {
           </Tip>
           <ThemeToggle />
           {tools.map((p) => (
-            <Tip key={p.id} label={p.title} describe={false} side="bottom">
-              <NavLink to={`/${app}/${p.id}`} className="icon-button" aria-label={p.title}><Icon name={p.icon} /></NavLink>
-            </Tip>
+            <NavLink key={p.id} to={`/${app}/${p.id}`} className="button tool-link"><Icon name={p.icon} /><span>{p.short}</span></NavLink>
           ))}
         </div>
       </header>

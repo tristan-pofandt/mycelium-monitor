@@ -1,6 +1,6 @@
 // Panel registry: each feature is one module here. The header nav and command palette list these automatically and hide a panel
 // whose `requires` capabilities the current app lacks (see docs/architecture.md, "Adding a feature").
-// `short` is the pill label, `icon` a name from icons.jsx, and `place: "tools"` puts a panel among the header's icon buttons.
+// `short` is the pill label, `icon` a name from icons.jsx, and `place: "tools"` puts a panel among the header's labelled tool buttons (and at the end of the tab row on narrow screens).
 import Overview from "./Overview.jsx";
 import Status from "./Status.jsx";
 import Costs from "./Costs.jsx";

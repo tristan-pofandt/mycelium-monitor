@@ -2,12 +2,12 @@
 
 /* ── Shell ─────────────────────────────────────────────────────────────── */
 .shell { min-height: 100dvh; }
-.topbar { position: sticky; top: 0; z-index: 5; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding: 14px var(--gutter); background: color-mix(in srgb, var(--bg-base) 82%, transparent); backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px); border-bottom: 1px solid transparent; }
+.topbar { position: sticky; top: 0; z-index: 5; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 14px var(--gutter); background: color-mix(in srgb, var(--bg-base) 82%, transparent); backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px); border-bottom: 1px solid transparent; }
 .topbar-start { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .topbar-end { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-weight: 650; font-size: 17px; letter-spacing: -0.02em; border-radius: 999px; }
 .pills { min-width: 0; }
-.pills ul { position: relative; display: flex; gap: 2px; margin: 0; padding: 4px; list-style: none; background: var(--bg-card); border: 1px solid var(--border); box-shadow: var(--shadow-card); border-radius: 999px; overflow-x: auto; scrollbar-width: none; }
+.pills ul { position: relative; display: flex; gap: 2px; width: fit-content; max-width: 100%; margin: 0 auto; padding: 4px; list-style: none; background: var(--bg-card); border: 1px solid var(--border); box-shadow: var(--shadow-card); border-radius: 999px; overflow-x: auto; scrollbar-width: none; }
 .pills .pill-indicator { position: absolute; left: 0; top: 0; height: 100%; background: var(--accent); pointer-events: none; }
 .pills li { position: relative; }
 .pill { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 999px; color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500; white-space: nowrap; transition: background var(--dur-hover) var(--ease-out), color var(--dur-hover) var(--ease-out); }
@@ -16,6 +16,15 @@
 .icon-button { display: inline-grid; place-items: center; grid-auto-flow: column; gap: 8px; min-width: 40px; height: 40px; padding: 0 11px; flex: none; color: var(--text-muted); background: var(--bg-card); border: 1px solid var(--border); box-shadow: var(--shadow-card); border-radius: 999px; cursor: pointer; text-decoration: none; transition: background var(--dur-hover) var(--ease-out), color var(--dur-hover) var(--ease-out); }
 .icon-button:hover { color: var(--text); background: var(--bg-pop); }
 .icon-button.active { color: var(--accent-text); background: var(--accent-soft); }
+/* The header narrows in steps and every control keeps its label: below 1600px the tabs take their own row; below 960px the
+   tools (.tool-link, labelled buttons on the right) join the end of the tab row (.pill-tool); below 760px the brand word hides.
+   The tab row scrolls when it must, and its end fades only while tabs are hidden past it (.has-more, set by useMoreTabs). */
+.tool-link { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; text-decoration: none; }
+.tool-link.active { border-color: var(--accent); color: var(--accent-text); }
+.pill-tool { display: none; }
+.pills ul.has-more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); }
+.topbar-start .picker-button { max-width: 260px; }
+.picker-icon { color: var(--text-muted); }
 kbd { font: inherit; font-size: 11px; padding: 1px 6px; border: 1px solid var(--border-strong); border-radius: var(--r-tag); color: var(--text-muted); }
 
 .content { padding: 12px var(--gutter) 64px; width: 100%; min-width: 0; } /* the page spans the whole window */
@@ -23,7 +32,8 @@ kbd { font: inherit; font-size: 11px; padding: 1px 6px; border: 1px solid var(--
    Tables, charts and the map take a full row; .span-2 widens one tile where there is room for two columns. */
 .page-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 16px; align-items: stretch; }
 .page-grid > .page-head, .page-grid > .greeting, .page-grid > .kpis, .page-grid > .notice,
-.page-grid > .card:has(.table-wrap, table, .chart, .plot, .map-card), .page-grid > .map-card { grid-column: 1 / -1; }
+.page-grid > .card:has(.table-wrap, table, .chart, .plot, .map-card), .page-grid > .map-card, .page-grid > .notice-card,
+.page-grid > .panel-card:has(.table-wrap, .chart, .plot) { grid-column: 1 / -1; }
 .page-grid > .card { margin: 0; min-width: 0; }
 @media (min-width: 900px) { .page-grid > .span-2 { grid-column: span 2; } }
 .content:focus { outline: none; }
@@ -129,6 +139,14 @@ code { font-size: 13px; padding: 1px 5px; border-radius: var(--r-tag); backgroun
 .badge-ok .icon { color: var(--success); }
 .badge-bad .icon { color: var(--error); }
 .badge-none .icon { color: var(--text-muted); }
+.badge-ok { background: var(--good-soft); color: var(--success); }
+.badge-bad { background: var(--bad-soft); color: var(--error); }
+.badge-warn { background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); }
+/* Light mode: amber text needs a darker step to reach 4.5:1 on its own tint (the Light-Mode Contrast Rule) */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .badge-warn { background: color-mix(in srgb, var(--warning) 10%, transparent); color: color-mix(in srgb, var(--warning) 85%, var(--text)); }
+}
+:root[data-theme="light"] .badge-warn { background: color-mix(in srgb, var(--warning) 10%, transparent); color: color-mix(in srgb, var(--warning) 85%, var(--text)); }
 
 /* ── Charts ────────────────────────────────────────────────────────────── */
 .chart { margin: 0; }
@@ -195,6 +213,25 @@ code { font-size: 13px; padding: 1px 5px; border-radius: var(--r-tag); backgroun
 .check { display: flex; align-items: center; gap: 10px; font-size: 15px; }
 .check input { width: 18px; height: 18px; accent-color: var(--accent); }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.input { font: inherit; font-size: 14px; color: var(--text); background: var(--bg-surface); border: 1px solid var(--border-strong); border-radius: var(--r-field); padding: 9px 12px; min-width: 0; }
+.input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+textarea.input { width: 100%; resize: vertical; line-height: 1.45; }
+input.input { width: 100%; }
+.toolbar input.input, .toolbar select.input { width: auto; }
+select.input { padding-right: 28px; }
+.toolbar label { max-width: 100%; }
+.toolbar select.input { min-width: 0; max-width: 100%; text-overflow: ellipsis; }
+.toolbar .segmented { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.segmented button { white-space: nowrap; }
+.card-tools { flex-wrap: wrap; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0 0 12px; font-size: 14px; }
+.facts dt { color: var(--text-muted); }
+.facts dd { margin: 0; }
+.progress { height: 8px; border-radius: 999px; background: var(--gauge-off); overflow: hidden; margin: 8px 0 14px; }
+.progress span { display: block; height: 100%; background: var(--accent); transform-origin: left; transition: transform 0.4s var(--ease-out); }
+/* Links inside content use the accent, never browser blue */
+main a:not([class]) { color: var(--accent-text); font-weight: 500; text-decoration: none; }
+main a:not([class]):hover { text-decoration: underline; text-underline-offset: 3px; }
 .queue { list-style: none; margin: 0; padding: 0; }
 .queue-item { padding: 16px 0; border-top: 1px solid var(--border); }
 .queue-item:first-child { border-top: 0; padding-top: 0; }
@@ -322,17 +359,24 @@ code { font-size: 13px; padding: 1px 5px; border-radius: var(--r-tag); backgroun
 .activity { position: relative; }
 
 /* ── Responsive ────────────────────────────────────────────────────────── */
-@media (max-width: 1180px) {
+@media (max-width: 1600px) {
   .topbar { grid-template-columns: auto 1fr; }
   .pills { grid-column: 1 / -1; grid-row: 2; }
-  .pills ul { width: fit-content; max-width: 100%; margin: 0 auto; }
-  .search-button kbd { display: none; }
 }
+@media (max-width: 1320px) { .search-button kbd { display: none; } }
+@media (max-width: 960px) {
+  .tool-link { display: none; }
+  .pill-tool { display: block; }
+}
+/* Touch: chips and similar controls stay at least 40px tall to tap */
+@media (pointer: coarse) { .chip { min-height: 40px; } }
 @media (max-width: 760px) {
-  .topbar { padding: 10px 16px; gap: 10px; }
+  .topbar { padding: 10px 16px; gap: 10px; grid-template-columns: minmax(0, 1fr) auto; }
+  .topbar-start, .picker { min-width: 0; }
+  .topbar-start .picker-button { max-width: 100%; }
+  .topbar-end { gap: 6px; }
   .brand span { display: none; }
   .status-pill .badge { padding: 0 11px; }
-  .pills ul { mask-image: linear-gradient(to right, #000 82%, transparent); -webkit-mask-image: linear-gradient(to right, #000 82%, transparent); padding-right: 36px; } /* fades out where more tabs scroll in */
   .picker select { max-width: 140px; }
   .content { padding: 8px 16px 48px; }
   .kpis { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
@@ -347,6 +391,8 @@ code { font-size: 13px; padding: 1px 5px; border-radius: var(--r-tag); backgroun
   .uptime { gap: 1px; height: 28px; }
   .uptime-day { border-radius: 2px; }
   .heat-grid { gap: 2px; }
+  .facts { grid-template-columns: 1fr; gap: 2px; }
+  .facts dd { margin-bottom: 6px; }
 }
 
 /* Reduced motion: gentler, not none. Movement goes; short fades stay so changes are still easy to follow. */
@@ -359,4 +405,5 @@ code { font-size: 13px; padding: 1px 5px; border-radius: var(--r-tag); backgroun
   .switch:active .switch-thumb, .button:active, .segmented button:active { scale: none; }
   .row-new { animation: fade-in 150ms var(--ease-out); }
   .spinner { animation-duration: 1.4s; }
+  .progress span { transition: none; }
 }

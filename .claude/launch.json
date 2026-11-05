@@ -2,14 +2,6 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "demo",
-      "runtimeExecutable": "python",
-      "runtimeArgs": [
-        "demo/server.py"
-      ],
-      "port": 8200
-    },
-    {
       "name": "server",
       "runtimeExecutable": "python",
       "runtimeArgs": [
@@ -18,15 +10,15 @@
       "port": 8100
     },
     {
-      "name": "demo-dev",
+      "name": "web-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "--prefix",
         "web",
         "run",
-        "dev:demo"
+        "dev"
       ],
-      "port": 5174
+      "port": 5173
     }
   ]
 }

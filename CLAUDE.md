@@ -1,30 +1,31 @@
-# Mycelium instructions for Claude Code
+# Mycelium Monitor: notes for Claude Code
 
-Mycelium is a monitoring hub for several apps: status, uptime, costs, usage, API calls, access management, and a live Obsidian-style map of files and data stores with a pulse per read or write. Read `docs/architecture.md` before changing anything; it is the spec. `docs/roadmap.md` holds the plan after v1, its limits (no arbitrary remote commands; AI suggests, people approve) and open decisions.
+Mycelium Monitor watches several apps in one place: up or down, costs, usage, API calls, admin access, and a live map of files and data stores with a dot for each read or write. It is one of three Mycelium products (Ops, Monitor, Commerce). They are separate repos with one shared look.
+
+Read first: `docs/architecture.md` (how it works). Then `docs/roadmap.md` (what's next and the limits). For anything you see on screen: `DESIGN.md`, then `docs/design/`.
 
 ## Where things are
 
-- `server/`: Flask app (`app.py`, `create_app()`), tests in `server/test_*.py`. Collectors go in `server/collectors/`, API modules in `server/api/`.
-- `web/`: React + Vite. Panels are registered in `web/src/panels/index.js` (`id`, `title`, `requires`, `component`).
-- `web/src/choreography.js`, `reduced.js`, `motion/fm.js` are copied from Reroute (`apps/plan-b-mvp/web/src/`) and the base of `web/src/tokens.css` ports Reroute's `DESIGN.md` tokens. Keep them in step with Reroute; all easing and timing comes from `choreography.js`; transform and opacity only; honour reduced motion.
-- The look (since 2026-11-01) is Mycelium's own dashboard layer on top of those tokens: top pill nav, soft cards, hatched charts, gauge, heatmap. `DESIGN.md` is its rulebook; the direction brief is `.impeccable/surfaces/web-src.md`.
-- `demo/`: the fictional enterprise demo for the design partner (front end in `web/src/demo/`, built by `npm run build:demo`, served with feedback capture by `demo/server.py`). Feedback lands in git-ignored `demo/feedback/`; never commit it.
-- `emitters/python/`: the emitter apps embed. `hooks/claude/`: the Claude Code hook. `infra/`: Dockerfile.
+- `server/`: Flask (`app.py`, `create_app()`). Collectors in `server/collectors/`, API in `server/api/`, tests `server/test_*.py`.
+- `web/`: React + Vite. Panels are listed in `web/src/panels/index.js`.
+- **Design kit** (identical in every Mycelium repo; the reference copy is in `mycelium-ops`): `web/src/tokens.css`, `app.css`, `choreography.js`, `reduced.js`, `motion/*`, `Page.jsx`, `shell.jsx`, `ui.jsx`, `charts.jsx`, `tasks.jsx`, `icons.jsx`, `theme.js`, and `docs/design/`. If you change one, copy the change to the other repos. `choreography.js`, `reduced.js`, `motion/fm.js` and the base tokens also come from Reroute (`C:\dev\reroute`, `apps/plan-b-mvp/web/src/`); keep them in step.
+- `emitters/python/`: the emitter and code scan apps use. `hooks/claude/`: the Claude Code hook. `infra/`: Dockerfile and homelab deploy.
 
 ## Commands
 
 - Server tests: `cd server && python -m unittest -q`
 - Run the server: `cd server && python app.py` (http://127.0.0.1:8100)
-- Web: `cd web && npm ci && npm run build && npm test`; dev server `npm run dev` proxies `/api` and `/healthz` to 8100
-- Demo: `cd web && npm run build:demo`, then `python demo/server.py` (http://127.0.0.1:8200); tests `cd demo && python -m unittest -q`
+- Web: `cd web && npm ci && npm run build && npm test`. Dev server: `npm run dev` (sends `/api` and `/healthz` to 8100)
+- Emitter and hook tests: `python -m unittest -q` in `emitters/python` and `hooks/claude`
 - Docker: `docker build -f infra/Dockerfile -t mycelium .`
 
 ## Rules
 
-- Events carry metadata only: never file contents, request bodies, tokens, keys or personal data.
-- App admin tokens live only in the server's environment; never send them to the browser or store them in SQLite.
-- The site is private (Tailscale only); the repo is public, so never commit secrets, `.env` files or databases. The one public exception is the fictional demo (Funnel :10000, fictional data, feedback behind an access code; see `demo/README.md`). Never put real data in it.
-- Add a feature as one collector plus one panel; don't hard-code app names outside configuration.
-- Accessibility: every visual (including the map) has a keyboard and screen-reader equivalent.
-- After meaningful work, update `docs/` and the vault note `Projects/Mycelium.md` (see `CLAUDE.local.md` if present), crediting Claude and noting human review is required.
-- Commit messages end with the Co-Authored-By line from the session. Dev servers you start, you stop.
+- Events carry metadata only. Never file contents, request bodies, tokens, keys or personal data.
+- App admin tokens live only in the server's environment. Never send them to the browser or store them in SQLite.
+- The site is private (Tailscale only). The repo is public: never commit secrets, `.env` files or databases.
+- Add a feature as one collector plus one panel. Don't hard-code app names outside configuration.
+- Every visual (including the map) has a keyboard and screen-reader version.
+- Follow `docs/design/` exactly. No new colours, motion numbers or UI libraries.
+- After meaningful work, update `docs/` and the vault note `Projects/Mycelium Monitor.md` (see `CLAUDE.local.md`). Credit Claude and say a person needs to review it.
+- Commit messages end with the Co-Authored-By line from the session. Stop any dev server you start.

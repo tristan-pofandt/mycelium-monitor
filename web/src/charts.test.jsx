@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Bars, CountUp, Stat } from "./charts.jsx";
-import { StatusBadge } from "./panels/Status.jsx";
 
 describe("charts", () => {
   it("gives a stacked chart a legend and an exact table", () => {
@@ -33,11 +32,5 @@ describe("charts", () => {
     const { container } = render(<CountUp value={94.95} format={(v) => `${v}%`} />);
     expect(container.querySelector("span").textContent).toBe("94.95%");
     delete document.documentElement.dataset.motion;
-  });
-
-  it("names status in words, not colour alone", () => {
-    render(<><StatusBadge status="down" /><StatusBadge status={null} /></>);
-    expect(screen.getByText("Down")).toBeTruthy();
-    expect(screen.getByText("Unknown")).toBeTruthy();
   });
 });

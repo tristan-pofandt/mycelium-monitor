@@ -5,7 +5,6 @@ import { createPortal } from "react-dom";
 import { Icon } from "./icons.jsx";
 import { reducedMotion } from "./reduced.js";
 import { CSS_EASE } from "./choreography.js";
-import { ToastBridge } from "./api.js";
 
 // ── Tooltip ───────────────────────────────────────────────────────────────
 // Opens after 500 ms on hover or focus; once one tooltip has been open, neighbours open at once ("warm") for 400 ms after it
@@ -53,7 +52,6 @@ export function Tip({ label, children, describe = true, side = "top" }) {
 // ({ label, onClick }), such as Undo.
 const ToastCtx = createContext(() => {});
 export const useToast = () => useContext(ToastCtx);
-ToastBridge.use = useToast;
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
