@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router";
 import { panelsFor } from "./panels/index.js";
 import { useApi } from "./api.js";
@@ -7,8 +7,8 @@ import Login from "./Login.jsx";
 import { Icon, Logo } from "./icons.jsx";
 import Page from "./Page.jsx";
 import { StatusBadge } from "./panels/Status.jsx";
-import { Picker, Tip, ToastProvider, rovingKeys } from "./ui.jsx";
-import { ThemeToggle, useMoreTabs, usePill } from "./shell.jsx";
+import { Picker, Tip, ToastProvider } from "./ui.jsx";
+import { TabRow, ThemeToggle } from "./shell.jsx";
 
 // Capabilities of the selected app; "all" gets the union, so a panel shows when any app supports it.
 const capsOf = (apps, slug) =>
@@ -26,14 +26,8 @@ function Shell({ apps }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const rowRef = useRef(null);
-  const pillRef = useRef(null);
-  usePill(rowRef, pillRef, `${app}/${panel}`);
   const visible = panelsFor(capsOf(apps, app));
   const current = visible.find((p) => p.id === panel);
-
-  // On narrow screens the pill row scrolls: keep the current tab in view.
-  useEffect(() => { document.querySelector(".pill.active")?.scrollIntoView?.({ block: "nearest", inline: "center" }); }, [panel]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -48,7 +42,6 @@ function Shell({ apps }) {
   const appName = app === "all" ? "All apps" : apps.find((a) => a.slug === app)?.name || app;
   const nav = visible.filter((p) => p.place !== "tools");
   const tools = visible.filter((p) => p.place === "tools");
-  const more = useMoreTabs(rowRef, [nav.length, tools.length]); // fade the tab row's end only while tabs are hidden past it
   return (
     <div className="shell">
       <a href="#main" className="skip-link">Skip to content</a>
@@ -58,19 +51,10 @@ function Shell({ apps }) {
           <Picker label="App" value={app} onChange={(v) => navigate(`/${v}/${current.id}`)}
             options={[{ value: "all", label: "All apps" }, ...apps.map((a) => ({ value: a.slug, label: a.name }))]} />
         </div>
-        <nav className="pills" aria-label="Panels">
-          <ul role="list" ref={rowRef} className={more ? "has-more" : undefined} onKeyDown={(e) => rovingKeys(e, "a.pill")}>
-            <li className="pill-indicator" ref={pillRef} role="presentation" aria-hidden="true" />
-            {nav.map((p) => (
-              <li key={p.id}>
-                <NavLink to={`/${app}/${p.id}`} className="pill"><Icon name={p.icon} /><span>{p.short}</span></NavLink>
-              </li>
-            ))}
-            {tools.map((p) => ( /* below 960px the header has no room for these, so they join the end of the tab row */
-              <li key={p.id} className="pill-tool"><NavLink to={`/${app}/${p.id}`} className="pill"><Icon name={p.icon} /><span>{p.short}</span></NavLink></li>
-            ))}
-          </ul>
-        </nav>
+        <TabRow label="Panels" navKey={`${app}/${panel}`} tabs={[
+          ...nav.map((p) => ({ to: `/${app}/${p.id}`, icon: p.icon, label: p.short })),
+          ...tools.map((p) => ({ to: `/${app}/${p.id}`, icon: p.icon, label: p.short, tool: true })), // join the row below 960px
+        ]} />
         <div className="topbar-end">
           <NavLink to={`/${app}/status`} className="status-pill" aria-label={`Status: ${({ up: "healthy", down: "down" })[overall(apps, app)] || "not checked yet"}. Open status and uptime`}>
             <StatusBadge status={overall(apps, app)} words={{ up: "Healthy" }} />

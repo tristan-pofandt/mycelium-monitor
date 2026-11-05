@@ -18,11 +18,20 @@
 .icon-button.active { color: var(--accent-text); background: var(--accent-soft); }
 /* The header narrows in steps and every control keeps its label: below 1600px the tabs take their own row; below 960px the
    tools (.tool-link, labelled buttons on the right) join the end of the tab row (.pill-tool); below 760px the brand word hides.
-   The tab row scrolls when it must, and its end fades only while tabs are hidden past it (.has-more, set by useMoreTabs). */
+   Tabs that don't fit go into the More button at the row's end (TabRow in shell.jsx); the active tab always stays in the row. */
 .tool-link { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; text-decoration: none; }
 .tool-link.active { border-color: var(--accent); color: var(--accent-text); }
 .pill-tool { display: none; }
-.pills ul.has-more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); }
+.pills li[data-over] { display: none; }
+button.pill { font: inherit; font-size: 14px; border: 0; background: transparent; cursor: pointer; }
+.pill-more .icon { transition: rotate var(--dur-hover) var(--ease-out); }
+.pill-more [aria-expanded="true"] { color: var(--text); background: var(--bg-pop); }
+.pill-more [aria-expanded="true"] .icon { rotate: 180deg; }
+.popover.tab-menu { position: fixed; top: auto; left: auto; transform-origin: top right; max-height: calc(100dvh - 120px); overflow-y: auto; }
+.tab-menu li { padding: 0; }
+.tab-menu a { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border-radius: 10px; color: var(--text); text-decoration: none; }
+.tab-menu a:hover, .tab-menu a:focus-visible { background: var(--bg-pop); }
+.tab-menu a.active { color: var(--accent-text); font-weight: 500; }
 .topbar-start .picker-button { max-width: 260px; }
 .picker-icon { color: var(--text-muted); }
 kbd { font: inherit; font-size: 11px; padding: 1px 6px; border: 1px solid var(--border-strong); border-radius: var(--r-tag); color: var(--text-muted); }
@@ -438,7 +447,7 @@ main a:not([class]):hover { text-decoration: underline; text-underline-offset: 3
   .popover, .tooltip:not(.tooltip-instant) { animation: fade-in 150ms var(--ease-out); }
   .toast, .toast.is-leaving { translate: none; }
   @starting-style { .toast { translate: none; } }
-  .switch-thumb, .row-glow, .skip-link, .task-done .task-fill, .picker-button .icon { transition: none; }
+  .switch-thumb, .row-glow, .skip-link, .task-done .task-fill, .picker-button .icon, .pill-more .icon { transition: none; }
   .switch:active .switch-thumb, .button:active, .segmented button:active { scale: none; }
   .row-new { animation: fade-in 150ms var(--ease-out); }
   .spinner { animation-duration: 1.4s; }

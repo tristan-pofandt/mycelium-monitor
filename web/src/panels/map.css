@@ -1,0 +1,10 @@
+/* 3D live map (Map.jsx). The frame itself (.map: height, corners, background) is in app.css. */
+.map-3d { position: relative; cursor: grab; touch-action: none; }
+.map-3d:active { cursor: grabbing; }
+.map-3d canvas { display: block; }
+/* Labels for the highlighted cluster, placed by three's CSS2DRenderer; the halo keeps them legible over lines in either theme. */
+.map-label {
+  font: 500 11px/1.2 var(--font); color: var(--text-muted); white-space: nowrap; pointer-events: none;
+  text-shadow: 0 0 3px var(--bg-void), 0 0 3px var(--bg-void), 0 0 6px var(--bg-void);
+}
+.map-label.strong { color: var(--text); font-weight: 600; }

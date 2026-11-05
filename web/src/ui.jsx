@@ -223,7 +223,7 @@ export function Picker({ value, options, onChange, label, icon }) {
 export function rovingKeys(e, selector) {
   const keys = { ArrowRight: 1, ArrowLeft: -1, Home: "first", End: "last" };
   if (!(e.key in keys)) return;
-  const items = [...e.currentTarget.querySelectorAll(selector)].filter((el) => !el.disabled);
+  const items = [...e.currentTarget.querySelectorAll(selector)].filter((el) => !el.disabled && el.getClientRects().length); // skip hidden ones
   const i = items.indexOf(document.activeElement);
   if (i < 0) return;
   e.preventDefault();

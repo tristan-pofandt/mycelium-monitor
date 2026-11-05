@@ -19,7 +19,7 @@ The kit is the set of files below. **Copy them unchanged** from `mycelium-ops/we
 | `motion/fm.js` | Bookkeeping for running animations |
 | `motion/pages.js` | Page entrance, tab pill, theme circle |
 | `Page.jsx` | The page wrapper: grid, title, entrance |
-| `shell.jsx` | `ThemeToggle`, `usePill`, `useMoreTabs` |
+| `shell.jsx` | `ThemeToggle`, `TabRow` (tab row with the sliding pill and the More button), `fitTabs` |
 | `ui.jsx` | `Tip`, toasts, `Switch`, `HoldButton`, `EmptyState`, `Skeleton`, `Picker`, `rovingKeys`, `useRowHighlight` |
 | `charts.jsx` | `CountUp`, `Countable`, `Stat`, `Delta`, `KpiTile`, `Bars`, `Gauge`, `Heatmap`, `Table`, `DataTable` |
 | `tasks.jsx` | `useTask`, `TaskChip` |
@@ -27,7 +27,7 @@ The kit is the set of files below. **Copy them unchanged** from `mycelium-ops/we
 | `icons.jsx` | `Icon`, `Logo` |
 | `theme.js` | Light and dark, remembered in this browser |
 | `test-setup.js` | Test setup (jsdom has no `matchMedia`) |
-| `ui.test.jsx`, `charts.test.jsx`, `customise.test.jsx`, `motion/pages.test.js` | Tests for the kit |
+| `ui.test.jsx`, `charts.test.jsx`, `customise.test.jsx`, `shell.test.jsx`, `motion/pages.test.js` | Tests for the kit |
 
 Also copy `web/public/` (icons and `sw.js`, the service worker that caches the app shell only) and write a `manifest.webmanifest` with the product's name, `background_color` and `theme_color` `#08090d`, and the same icons.
 
@@ -71,11 +71,11 @@ createRoot(document.getElementById("root")).render(
 Pages live in one list. Tabs, tools and hidden pages all come from it. This is the whole frame; add features as pages.
 
 ```jsx
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { NavLink, Route, Routes, useLocation, useParams } from "react-router";
 import { Icon, Logo } from "./icons.jsx";
-import { Picker, rovingKeys } from "./ui.jsx";
-import { ThemeToggle, useMoreTabs, usePill } from "./shell.jsx";
+import { Picker } from "./ui.jsx";
+import { TabRow, ThemeToggle } from "./shell.jsx";
 import Page from "./Page.jsx";
 import Home from "./pages/Home.jsx";
 import Orders from "./pages/Orders.jsx";
@@ -91,18 +91,11 @@ const PAGES = [
 function Shell() {
   const { page: id = "" } = useParams();
   const location = useLocation();
-  const rowRef = useRef(null), pillRef = useRef(null);
-  usePill(rowRef, pillRef, id);
   const nav = PAGES.filter((p) => !p.tool && !p.hidden);
   const tools = PAGES.filter((p) => p.tool);
-  const more = useMoreTabs(rowRef, [nav.length, tools.length]);
   const page = PAGES.find((p) => p.id === id) || { title: "Page not found", component: () => <p className="notice">There's no page here.</p> };
-  useEffect(() => { document.querySelector(".pill.active")?.scrollIntoView?.({ block: "nearest", inline: "center" }); }, [id]);
   useEffect(() => { document.title = `${page.title} · Mycelium Commerce`; }, [page.title]);
   const Body = page.component;
-  const pill = (p, cls) => (
-    <li key={p.id} className={cls}><NavLink to={`/${p.id}`} end className="pill"><Icon name={p.icon} /><span>{p.short}</span></NavLink></li>
-  );
   return (
     <div className="shell">
       <a href="#main" className="skip-link">Skip to content</a>
@@ -111,13 +104,10 @@ function Shell() {
           <NavLink to="/" className="brand" aria-label="Mycelium Commerce, home"><Logo /><span>Mycelium</span></NavLink>
           <Picker label="Store" icon="user" value="main" onChange={() => {}} options={[{ value: "main", label: "Main store" }]} />
         </div>
-        <nav className="pills" aria-label="Pages">
-          <ul role="list" ref={rowRef} className={more ? "has-more" : undefined} onKeyDown={(e) => rovingKeys(e, "a.pill")}>
-            <li className="pill-indicator" ref={pillRef} role="presentation" aria-hidden="true" />
-            {nav.map((p) => pill(p))}
-            {tools.map((p) => pill(p, "pill-tool"))}
-          </ul>
-        </nav>
+        <TabRow navKey={id} tabs={[
+          ...nav.map((p) => ({ to: `/${p.id}`, end: true, icon: p.icon, label: p.short })),
+          ...tools.map((p) => ({ to: `/${p.id}`, end: true, icon: p.icon, label: p.short, tool: true })),
+        ]} />
         <div className="topbar-end">
           <ThemeToggle />
           {tools.map((p) => <NavLink key={p.id} to={`/${p.id}`} className="button tool-link"><Icon name={p.icon} /><span>{p.short}</span></NavLink>)}

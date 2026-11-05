@@ -30,7 +30,7 @@ The header gets narrower in steps. **Every control keeps its words at every widt
 | 960px and under | Tools leave the right side and join the end of the tab row (`.pill-tool`) |
 | 760px and under | Columns become `minmax(0, 1fr) auto`. The word next to the logo hides. Header padding is `10px 16px`, gaps 10px (6px on the right). The picker may shrink and cut its text with "…". More header buttons may move into the banner, which goes to 13px text and `10px 12px` padding, with its buttons at least 40px tall |
 
-When the tab row is too long it scrolls sideways (no scroll bar). Its last 56px fade out **only while tabs are hidden past it** (`.has-more`, set by `useMoreTabs`). The active tab scrolls into view, centred, on every page change.
+**Tabs never get cut off.** When they don't all fit, the ones that don't fit move into a **More** button at the end of the row (`TabRow` in `shell.jsx`). The tabs that fit stay in order from the left. The active tab always stays in the row: if it would not fit, it takes the last place and the tab before it moves into More. This is worked out again whenever the row changes width.
 
 ## The page grid
 

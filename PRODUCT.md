@@ -8,6 +8,6 @@
 
 **Mode.** A working dashboard. Easy scanning, the same controls everywhere, and a text version of every picture matter more than decoration.
 
-**Look.** The shared Mycelium look (`DESIGN.md`). Monitor's signature is the live map: it has its own page and a card on the Overview.
+**Look.** The shared Mycelium look (`DESIGN.md`). Monitor's signature is the live 3D map: it has its own page and a 2D preview card on the Overview.
 
 **Limits.** Private site on the tailnet; public repo. Events are metadata only. Every visual has a keyboard and screen-reader version. Status is never colour alone. Reduced motion is honoured. Nothing is made up: numbers, insights and states come from real data.
