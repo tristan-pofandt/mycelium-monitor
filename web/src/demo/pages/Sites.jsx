@@ -84,7 +84,7 @@ function Detail({ id, view, setView, focus }) {
         <div role="group" aria-label="Site view" className="segmented" onKeyDown={(e) => rovingKeys(e, "button")}>
           {VIEWS.map((v) => <button key={v.id} type="button" aria-pressed={view === v.id} onClick={() => setView(v.id)}>{v.label}</button>)}
         </div>
-        {s && can("tv") && <button type="button" className="button" aria-expanded={tv} onClick={() => setTv((v) => !v)}><Icon name="tv" /><span>Open TV mode</span></button>}
+        {s && can("tv") && <button type="button" className="button tv-open" aria-expanded={tv} onClick={() => setTv((v) => !v)}><Icon name="tv" /><span>Open TV mode</span></button>}
       </div>
       {tv && <TvSetup site={id} onClose={() => setTv(false)} />}
     </>

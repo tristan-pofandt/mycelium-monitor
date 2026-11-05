@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as data from "./data.js";
-import { ALERT_FOCUS, EVENTS, INCIDENTS, NOW, PLANS, REPLAY_START, findObject, objectsOf, stateAt, zoneCounts } from "./plans.js";
+import { ALERT_FOCUS, EVENTS, INCIDENTS, NOW, PLANS, REPLAY_START, findObject, focusTime, objectsOf, stateAt, zoneCounts } from "./plans.js";
 
 const { DOORS } = data;
 
@@ -61,5 +61,16 @@ describe("stateAt", () => {
       const drawn = PLANS[site].doors.map((d) => d.name);
       names.forEach((n) => expect(drawn).toContain(typeof n === "string" ? n : n.name));
     }
+  });
+});
+
+describe("focusTime", () => {
+  it("starts Show on map at the incident: the preset, else the object's latest notable event, else live", () => {
+    const leaver = INCIDENTS.find((i) => i.id === "ips-leaver");
+    expect(focusTime("ips", "ips-gate-2")).toBe(leaver.at);
+    const t = focusTime("acr", "acr-cam-dock-3");
+    expect(stateAt(objectsOf(PLANS.acr), EVENTS.acr, t)["acr-cam-dock-3"].state).toBe("offline");
+    expect(focusTime("hq", "hq-cam-level-3")).toBeNull();
+    Object.values(ALERT_FOCUS).forEach((f) => { const at = focusTime(f.site, f.focus); if (at !== null) expect(at).toBeGreaterThanOrEqual(REPLAY_START); });
   });
 });

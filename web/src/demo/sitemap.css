@@ -33,7 +33,7 @@
 .sm-obj { cursor: pointer; outline: none; }
 .sm-hit { fill: transparent; }
 .sm-ring { fill: none; stroke: var(--accent-text); stroke-width: 2.5; opacity: 0; transition: opacity var(--dur-hover) var(--ease-out); }
-.sm-obj:hover .sm-ring { opacity: 0.5; }
+@media (hover: hover) { .sm-obj:hover .sm-ring { opacity: 0.5; } } /* a tap must not leave a half ring behind */
 .sm-obj:focus-visible .sm-ring, .sm-obj.is-selected .sm-ring { opacity: 1; }
 .sm-obj.is-highlight .sm-ring { opacity: 1; fill: var(--accent-soft); }
 
@@ -72,13 +72,15 @@
 .sm-legend li { display: inline-flex; align-items: center; gap: 6px; }
 .sm-legend-count { font-size: 15px; font-weight: 600; color: var(--text); }
 .sm-zones .small-head { margin-top: 4px; }
+.sm-pan-hint { display: none; margin: 0; }
+.sm-site-pick { max-width: 100%; overflow-x: auto; scrollbar-width: none; } /* Security's site switcher scrolls on a phone */
 
 .sm-log h3 { margin: 0 0 4px; font-size: 15px; }
 .sm-log > p { margin: 0 0 8px; }
 .sm-log ol { list-style: none; margin: 0; padding: 0; max-height: 640px; overflow-y: auto; }
 .sm-log li + li { border-top: 1px solid var(--border); }
 .sm-log-item { display: grid; grid-template-columns: 6.5em minmax(0, 1fr); gap: 4px 10px; width: 100%; padding: 9px 8px; font: inherit; font-size: 14px; text-align: left; color: var(--text); background: transparent; border: 0; border-radius: var(--r-tile); cursor: pointer; transition: background var(--dur-hover) var(--ease-out); }
-.sm-log-item:hover { background: var(--bg-pop); }
+@media (hover: hover) { .sm-log-item:hover { background: var(--bg-pop); } }
 .sm-log-item .badge { grid-column: 2; width: fit-content; }
 
 @media (max-width: 1100px) {
@@ -88,11 +90,15 @@
 @media (max-width: 760px) {
   /* The plan scales down to the phone's width, so its words get bigger in plan units and normal-state labels drop out;
      the areas table below says everything the plan does. */
-  .sm-canvas { padding: 4px; border-radius: var(--r-field); }
-  .sm-zone-name { font-size: 24px; }
-  .sm-count { font-size: 44px; }
+  /* The plan keeps at least 640px and pans sideways in its own frame, so symbols stay 28px targets and words stay readable
+     (fitted to 390px, a symbol was a 15px target and a label 7px); the page itself never scrolls sideways. */
+  .sm-canvas { padding: 4px; border-radius: var(--r-field); overflow-x: auto; overscroll-behavior-x: contain; }
+  .sm-canvas svg { min-width: 640px; }
+  .sm-pan-hint { display: block; }
+  .sm-zone-name { font-size: 20px; }
+  .sm-count { font-size: 40px; }
   .sm-count-unit, .sm-uncounted { display: none; }
-  .sm-label { font-size: 22px; stroke-width: 6px; }
+  .sm-label { font-size: 20px; stroke-width: 6px; }
   .sm-label.is-plain { display: none; }
   .sm-time { margin-left: 0; flex-basis: 100%; }
 }

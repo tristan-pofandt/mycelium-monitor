@@ -19,6 +19,7 @@ export function TvSetup({ site, onClose }) {
   const [on, setOn] = useState(saved.screens?.length ? saved.screens : SCREENS.map((s) => s.id));
   const [text, setText] = useState(saved.announcement || "");
   if (!pick) return null;
+  const empty = !on.some((id) => id !== "announcement" || text.trim()); // only an empty announcement would leave nothing to show
   const tick = (id, yes) => setOn((v) => (yes ? SCREENS.map((s) => s.id).filter((x) => x === id || v.includes(x)) : v.filter((x) => x !== id)));
   const submit = (e) => {
     e.preventDefault();
@@ -51,9 +52,9 @@ export function TvSetup({ site, onClose }) {
         <textarea className="input" rows={2} maxLength={160} value={text} onChange={(e) => setText(e.target.value)} aria-describedby="tv-say-hint" />
       </label>
       <p id="tv-say-hint" className="muted small">Up to 160 characters, shown in large type. Don't name anyone.</p>
-      {!on.length && <p className="muted small" role="status">Tick at least one screen.</p>}
+      {empty && <p className="muted small" role="status">{on.length ? "Type the announcement, or tick another screen." : "Tick at least one screen."}</p>}
       <div className="actions">
-        <button type="submit" className="button button-primary" disabled={!on.length}>Open TV mode</button>
+        <button type="submit" className="button button-primary" disabled={empty}>Open TV mode</button>
         <button type="button" className="button" onClick={onClose}>Cancel</button>
       </div>
       <SourceNote ids={["plantdata", "whs", "rostering", "permits", "floorplans", "evac"]} />

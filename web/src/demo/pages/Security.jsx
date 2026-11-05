@@ -31,7 +31,7 @@ function SecurityMap({ scopeSite }) {
       <div className="card-head">
         <div><h2 id="security-map-h">Site map</h2><p className="card-sub">Doors, cameras and alarms as they are now. Replay the last 24 hours to see how an alert happened.</p></div>
         {sites.length > 1 && (
-          <div role="group" aria-label="Site on the map" className="segmented" onKeyDown={(e) => rovingKeys(e, "button")}>
+          <div role="group" aria-label="Site on the map" className="segmented sm-site-pick" onKeyDown={(e) => rovingKeys(e, "button")}>
             {sites.map((id) => <button key={id} type="button" aria-pressed={site === id} onClick={() => setParams({ map: id })}>{siteName(id)}</button>)}
           </div>
         )}

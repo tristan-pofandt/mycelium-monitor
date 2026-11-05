@@ -15,7 +15,7 @@ const M = 60e3, H = 3600e3;
 export const NOW = Math.floor(Date.now() / STEP) * STEP;
 export const REPLAY_START = NOW - 24 * H;
 export const REPLAY_STEPS = (NOW - REPLAY_START) / STEP; // 288
-export const fmtTime = (t) => `${t < TODAY.getTime() ? "Yesterday " : ""}${new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+export const fmtTime = (t) => `${t < TODAY.getTime() ? "Yesterday " : ""}${new Date(t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 // zones: [id, name, x, y, w, h]. doors: name -> [from, to, x, y, orientation "h" | "v", label side "l" | "r" | "t" | "b"].
@@ -45,12 +45,12 @@ const DEF = {
   twb: {
     zones: [["carpark1", "Car park 1", 40, 40, 260, 160], ["office", "Office and reception", 40, 216, 260, 188], ["comms", "Comms room", 40, 420, 120, 140],
       ["carpark2", "Car park 2", 176, 420, 264, 140], ["shop", "Machine shop", 316, 40, 324, 364], ["foundry", "Foundry", 656, 40, 304, 520]],
-    doors: { "Main entry": ["outside", "office", 170, 208, "h", "r"], "Gate 1": ["outside", "shop", 480, 30, "h", "r"], "Foundry": ["shop", "foundry", 648, 220, "v", "r"],
+    doors: { "Main entry": ["outside", "office", 170, 208, "h", "r"], "Gate 1": ["outside", "shop", 480, 30, "h", "r"], "Foundry": ["shop", "foundry", 648, 220, "v", "l"],
       "Comms room": ["office", "comms", 100, 412, "h", "r"] },
     routes: [[0.45, ["Gate 1"]], [0.45, ["Gate 1", "Foundry"]], [0.09, ["Main entry"]], [0.01, ["Main entry", "Comms room"]]],
     cameras: [["Gate 1", 530, 75], ["Office", 265, 300], ["Foundry east", 925, 300], ["Car park 2", 405, 525], ["Comms room", 128, 505]],
     alarms: [["Perimeter fence", 300, 580, null], ["Comms room", 130, 465, "comms"]],
-    machines: { "twb-cnc": [470, 250], "twb-pour": [760, 180], "twb-crane": [860, 330] },
+    machines: { "twb-cnc": [470, 250], "twb-pour": [760, 180], "twb-crane": [830, 380] },
   },
   tsv: {
     zones: [["office", "Office and reception", 40, 40, 260, 220], ["comms", "Comms room", 40, 276, 140, 144], ["carpark", "Car park", 40, 436, 260, 124],
@@ -226,4 +226,12 @@ export const ALERT_FOCUS = {
   s1: { site: "ips", focus: "ips-gate-2" }, s2: { site: "twb", focus: "twb-comms-room" }, s3: { site: "acr", focus: "acr-cam-dock-3" },
   s4: { site: "tsv", focus: "tsv-alarm-perimeter-gate" }, s6: { site: "twb", focus: "twb-comms-room" }, s7: { site: "acr", focus: "acr-tank-2-confined-space" },
 };
+// Where the replay starts when "Show on map" opens an object: its preset incident, else its latest notable event in the last
+// 24 hours (rounded up to a step, so the event is shown), else null for live.
+export function focusTime(site, id) {
+  const preset = INCIDENTS.find((i) => i.site === site && i.focus === id);
+  if (preset) return preset.at;
+  const e = (EVENTS[site] || []).filter((x) => x.object === id && x.text && x.at >= REPLAY_START).at(-1);
+  return e ? Math.min(NOW, Math.ceil(e.at / STEP) * STEP) : null;
+}
 export const mapHref = (site, focus) => `/sites?site=${site}&view=map${focus ? `&focus=${encodeURIComponent(focus)}` : ""}`;

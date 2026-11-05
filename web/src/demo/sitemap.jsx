@@ -17,10 +17,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { Table } from "../charts.jsx";
 import { Icon } from "../icons.jsx";
+import { rovingKeys } from "../ui.jsx";
 import { useReducedMotion } from "../reduced.js";
 import { Sev } from "./bits.jsx";
 import { CAMERAS } from "./data.js";
-import { EVENTS, INCIDENTS, NOW, PLANS, REPLAY_START, REPLAY_STEPS, STEP, fmtTime, mapHref, objectsOf, stateAt, zoneCounts } from "./plans.js";
+import { EVENTS, INCIDENTS, NOW, PLANS, REPLAY_START, REPLAY_STEPS, STEP, fmtTime, focusTime, mapHref, objectsOf, stateAt, zoneCounts } from "./plans.js";
 import "./sitemap.css";
 
 const KIND = { door: "door", camera: "camera", alarm: "alarm point", machine: "machine" };
@@ -71,6 +72,7 @@ export function SiteMap({ site, at = NOW, highlight = null, mode = "live", count
   const states = useMemo(() => stateAt(objects, events, at), [objects, events, at]);
   const people = useMemo(() => counts || zoneCounts(events, plan, at), [counts, events, plan, at]);
   const [selected, setSelected] = useState(highlight);
+  const [cur, setCur] = useState(null); // the one object in the Tab order; arrow keys move between objects
   const refs = useRef({});
   useEffect(() => { if (highlight) setSelected(highlight); }, [highlight]);
   const choose = (id) => { setSelected(id); onSelect?.(id); };
@@ -90,11 +92,13 @@ export function SiteMap({ site, at = NOW, highlight = null, mode = "live", count
   const cams = CAMERAS.find((c) => c.site === site);
   const camOff = plan.cameras.filter((c) => states[c.id].state === "offline");
   const doorsOf = (z) => plan.doors.filter((d) => d.to === z.id || d.from === z.id);
+  const stop = objects.some((o) => o.id === cur) ? cur : objects.some((o) => o.id === selected) ? selected : objects[0]?.id;
 
   return (
     <div className={`sitemap ${compact ? "is-compact" : ""}`}>
       <div className="sm-canvas">
-        <svg viewBox={`0 0 ${plan.w} ${plan.h}`} role="group" aria-label={`${plan.name} site plan at ${fmtTime(at)}: ${total} people in counted areas. Each door, camera, alarm point and machine is a button.`}>
+        <svg viewBox={`0 0 ${plan.w} ${plan.h}`} role="group" onKeyDown={(e) => rovingKeys(e, ".sm-obj")}
+          aria-label={`${plan.name} site plan at ${fmtTime(at)}: ${total} people in counted areas. Each door, camera, alarm point and machine is a button; arrow keys move between them.`}>
           <rect className="sm-fence" x="20" y="20" width="960" height="560" rx="16" aria-hidden="true" />
           <g aria-hidden="true">
             {plan.zones.map((z) => {
@@ -114,7 +118,7 @@ export function SiteMap({ site, at = NOW, highlight = null, mode = "live", count
             const s = states[o.id];
             const name = `${o.name}, ${KIND[o.kind]}, ${stateText(o, s, at)}`;
             return (
-              <g key={o.id} ref={(el) => { refs.current[o.id] = el; }} transform={`translate(${o.x} ${o.y})`} role="button" tabIndex={0} aria-label={name}
+              <g key={o.id} ref={(el) => { refs.current[o.id] = el; }} data-id={o.id} transform={`translate(${o.x} ${o.y})`} role="button" tabIndex={o.id === stop ? 0 : -1} aria-label={name} onFocus={() => setCur(o.id)}
                 aria-pressed={selected === o.id} className={`sm-obj ${o.id === highlight ? "is-highlight" : ""} ${selected === o.id ? "is-selected" : ""}`}
                 onClick={() => choose(selected === o.id ? null : o.id)}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); choose(selected === o.id ? null : o.id); } else if (e.key === "Escape" && selected) close(); }}>
@@ -132,6 +136,7 @@ export function SiteMap({ site, at = NOW, highlight = null, mode = "live", count
           })}
         </svg>
       </div>
+      <p className="muted small sm-pan-hint">Swipe the plan sideways to see all of it, and tap a symbol for its details.</p>
       {controls}
       {sel && <Detail plan={plan} o={sel} s={states[sel.id]} events={events} at={at} onClose={close} />}
       {!compact && <Legend />}
@@ -194,13 +199,24 @@ function Zones({ plan, people, states, doorsOf, compact, mode }) {
 // "What happened" list up to the time shown. `focus` (an object id) opens that object, e.g. from Security's "Show on map".
 export function SiteMapReplay({ site, focus = null }) {
   const events = EVENTS[site] || [];
-  const [step, setStep] = useState(REPLAY_STEPS);
+  const stepFor = (id) => { const t = id && focusTime(site, id); return t ? (t - REPLAY_START) / STEP : REPLAY_STEPS; };
+  const [step, setStep] = useState(() => stepFor(focus));
   const [playing, setPlaying] = useState(false);
   const [sel, setSel] = useState(focus);
   const box = useRef(null);
   const at = REPLAY_START + step * STEP;
   const live = step === REPLAY_STEPS;
-  useEffect(() => { setSel(focus); if (focus) box.current?.scrollIntoView?.({ block: "start" }); }, [focus, site]);
+  // "Show on map": open the object at the time of its incident, bring the card into view and put keyboard focus on the object
+  // (on a phone the plan pans sideways, so scroll it to the object too).
+  useEffect(() => {
+    setSel(focus);
+    if (!focus) return;
+    setStep(stepFor(focus));
+    box.current?.scrollIntoView?.({ block: "start" });
+    const el = box.current?.querySelector(`.sm-obj[data-id="${focus}"]`), pane = box.current?.querySelector(".sm-canvas");
+    if (el && pane) { const r = el.getBoundingClientRect(), p = pane.getBoundingClientRect(); pane.scrollLeft += r.left + r.width / 2 - (p.left + p.width / 2); }
+    el?.focus({ preventScroll: true });
+  }, [focus, site]);
   useEffect(() => { if (!playing) return undefined; const t = setInterval(() => setStep((s) => Math.min(REPLAY_STEPS, s + 1)), 300); return () => clearInterval(t); }, [playing]);
   useEffect(() => { if (live) setPlaying(false); }, [live]);
   const go = (s) => { setStep(Math.max(0, Math.min(REPLAY_STEPS, s))); };

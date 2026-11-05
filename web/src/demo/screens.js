@@ -43,10 +43,12 @@ export function outputToday(site, at = Date.now()) {
 }
 
 // The screens to rotate through, in order, from store `tv` ({ announcement, screens }). No ticks means all of them; the
-// announcement only shows when there is one.
+// announcement only shows when there is one. A screen is never left blank: if the ticks leave nothing to show (only an empty
+// announcement), it falls back to every screen.
 export function screenOrder(settings = {}) {
-  const on = settings?.screens?.length ? settings.screens : SCREENS.map((s) => s.id);
-  return SCREENS.map((s) => s.id).filter((id) => on.includes(id) && (id !== "announcement" || !!settings?.announcement?.trim()));
+  const pick = (on) => SCREENS.map((s) => s.id).filter((id) => on.includes(id) && (id !== "announcement" || !!settings?.announcement?.trim()));
+  const out = settings?.screens?.length ? pick(settings.screens) : [];
+  return out.length ? out : pick(SCREENS.map((s) => s.id));
 }
 
 // The next screen, wrapping both ways: step 1 forward, -1 back.

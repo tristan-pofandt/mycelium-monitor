@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router";
 import { Icon } from "../icons.jsx";
 import { HoldButton, rovingKeys } from "../ui.jsx";
-import { siteName } from "./data.js";
+import { person, siteName } from "./data.js";
 import { SourceNote } from "./bits.jsx";
 import { audit, update, useCan, useDemo, usePersona } from "./store.js";
 import { PAST_ROLLCALLS, reportOf, rollCall, rollCallSites } from "./rollcall.js";
@@ -142,12 +142,17 @@ export function RollCallButton({ className = "" }) {
 // The banner line while a roll call runs, on every page. Numbers only, never names.
 export function RollCallLine() {
   const can = useCan();
+  const persona = usePersona();
   const { rc, result } = useRollCall();
   if (!rc) return null;
   const text = `${MODE[rc.mode]} at ${siteName(rc.site)}: ${result.counts.notYet} not yet accounted for`;
+  // Only people at that site are told to go to the assembly point; elsewhere it's news, not an instruction.
+  const here = person(persona.person)?.site === rc.site;
   return (
     <p className="rc-line"><Icon name="siren" />
-      {can("emergency") ? <Link to="/emergency">{text}</Link> : <span>{text}. Go to your assembly point; wardens are checking everyone is out.</span>}
+      {can("emergency") ? <Link to="/emergency">{text}</Link>
+        : here ? <span>{text}. Go to your assembly point; wardens are checking everyone is out.</span>
+        : <span>{MODE[rc.mode]} under way at {siteName(rc.site)}. Nothing for you to do at your site.</span>}
     </p>
   );
 }

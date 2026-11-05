@@ -24,7 +24,7 @@
 .rc-board > .panel-card { margin: 0; min-width: 0; }
 @media (min-width: 1100px) {
   .rc-board { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
-  .rc-map { order: -1; position: sticky; top: 16px; } /* map on the left beside the list; on phones the list comes first */
+  .rc-map { order: -1; position: sticky; top: 144px; } /* map on the left beside the list, clear of the 128px sticky header; on phones the list comes first */
 }
 .rc-search input { font-size: 16px; min-height: 48px; } /* 16px: phones don't zoom into the field */
 .rc-group .small-head { margin: 16px 0 6px; }

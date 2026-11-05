@@ -46,6 +46,7 @@
 .tv .chart .y-axis, .tv .chart .axis { font-size: var(--tv-label); }
 .tv .chart .bar-col { max-width: 120px; }
 .tv .table-toggle summary { font-size: var(--tv-label); }
+.tv .chart .tip { font-size: var(--tv-label); padding: 0.3em 0.7em; } /* the today pill, read from across the floor */
 
 .tv-main > .tv-controls { display: grid; gap: 12px; align-self: end; }
 .tv-progress { height: 4px; border-radius: 999px; background: var(--border-strong); overflow: hidden; }
@@ -76,6 +77,7 @@
 :root[data-motion="reduced"] .tv-progress { display: none; }
 
 /* The setup card on Sites (an ordinary form, not the TV) */
+.button.tv-open { display: inline-flex; align-items: center; gap: 8px; }
 .tv-setup { display: grid; gap: 14px; }
 .tv-setup h2 { margin: 0; }
 .tv-setup-screens { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; min-width: 0; }

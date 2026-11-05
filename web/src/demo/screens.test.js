@@ -25,7 +25,7 @@ describe("screenOrder", () => {
   });
   it("adds the announcement once there is one, in the screens' own order", () => {
     expect(screenOrder({ announcement: "  Toolbox talk at 2  ", screens: ["announcement", "safety"] })).toEqual(["safety", "announcement"]);
-    expect(screenOrder({ announcement: "   ", screens: ["announcement"] })).toEqual([]);
+    expect(screenOrder({ announcement: "   ", screens: ["announcement"] })).toEqual(screenOrder({})); // never a blank wall
   });
   it("falls back to everything when nothing is ticked", () => {
     expect(screenOrder({ screens: [] })).toEqual(screenOrder({}));
