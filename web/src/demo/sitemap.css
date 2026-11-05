@@ -1,0 +1,98 @@
+/* Site map (sitemap.jsx): plan on the void ground like the live map, zones as quiet cards, status colour only on objects whose
+   state is a problem, the accent for focus, selection and pulses. Sizes are in the plan's 1000 x 600 units. Motion: one ring
+   per door read (scale and opacity only), not drawn under reduced motion. */
+
+.sitemap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; }
+.sm-canvas { background: var(--bg-void); border-radius: var(--r-card); padding: 8px; }
+.sm-canvas svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+.sm-fence { fill: none; stroke: var(--border-strong); stroke-width: 1.5; stroke-dasharray: 8 6; }
+.sm-zone rect { fill: var(--bg-card); stroke: var(--border-strong); stroke-width: 1.5; }
+.sm-zone.is-inner rect { fill: var(--bg-pop); stroke-dasharray: 6 4; }
+.sm-zone.is-alarm rect { stroke: var(--error); stroke-width: 3; stroke-dasharray: 10 6; }
+.sm-zone-name { font-size: 15px; font-weight: 600; fill: var(--text-muted); }
+.sm-count { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; fill: var(--text); }
+.sm-count-unit { font-size: 14px; font-weight: 500; letter-spacing: 0; fill: var(--text-muted); }
+.sm-uncounted { font-size: 13px; fill: var(--text-faint); }
+
+/* Symbols: shape says the kind, fill or outline the state, and a word says it again */
+.sm-g { stroke-width: 2; }
+.sm-g.is-ok, .sm-g.is-ok circle, .sm-g.is-ok path { fill: var(--bg-pop); stroke: var(--text-muted); }
+.sm-door.is-ok { fill: var(--text-muted); stroke: none; }
+.sm-door.is-bad { fill: var(--bg-card); stroke: var(--error); stroke-width: 3; stroke-dasharray: 5 3; } /* an open door: a broken outline */
+.sm-camera.is-bad circle, .sm-camera.is-bad path { fill: var(--bg-card); stroke: var(--error); stroke-dasharray: 3 2.5; }
+.sm-camera .sm-slash { stroke: var(--error); stroke-width: 2.5; stroke-dasharray: none; }
+.sm-alarm.is-bad, .sm-machine.is-bad { fill: var(--error); stroke: var(--error); }
+.sm-machine.is-warn { fill: var(--warning); stroke: var(--warning); }
+
+.sm-label { font-size: 14px; font-weight: 500; fill: var(--text-muted); paint-order: stroke; stroke: var(--bg-card); stroke-width: 4px; stroke-linejoin: round; pointer-events: none; }
+.sm-state { font-weight: 600; }
+.sm-state.is-bad { fill: var(--error); }
+.sm-state.is-warn { fill: var(--warning); }
+
+.sm-obj { cursor: pointer; outline: none; }
+.sm-hit { fill: transparent; }
+.sm-ring { fill: none; stroke: var(--accent-text); stroke-width: 2.5; opacity: 0; transition: opacity var(--dur-hover) var(--ease-out); }
+.sm-obj:hover .sm-ring { opacity: 0.5; }
+.sm-obj:focus-visible .sm-ring, .sm-obj.is-selected .sm-ring { opacity: 1; }
+.sm-obj.is-highlight .sm-ring { opacity: 1; fill: var(--accent-soft); }
+
+.sm-pulse { fill: none; stroke: var(--accent); stroke-width: 3; pointer-events: none; transform-box: fill-box; transform-origin: center; animation: sm-pulse 0.6s var(--ease-out) both; }
+.sm-pulse.is-bad { stroke: var(--error); }
+@keyframes sm-pulse { from { transform: scale(1); opacity: 0.8; } to { transform: scale(1.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .sm-pulse { display: none; } .sm-ring { transition: none; } }
+
+/* Replay: map and controls on the left, "What happened" beside it */
+.sm-replay { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); gap: 20px; align-items: start; scroll-margin-top: 140px; } /* clears the sticky header when "Show on map" scrolls here */
+.sm-controls { display: grid; gap: 10px; }
+.sm-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sm-buttons .button { display: inline-flex; align-items: center; gap: 6px; }
+.sm-buttons .button:disabled { opacity: 0.5; cursor: default; }
+.sm-time { margin: 0 0 0 auto; display: inline-flex; align-items: center; gap: 8px; font-size: 15px; }
+.sm-range { display: grid; gap: 2px; }
+.sm-range input { width: 100%; accent-color: var(--accent); margin: 0; }
+.sm-range-ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); }
+.sm-presets { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.sm-preset { font-size: 13px; padding: 6px 12px; white-space: normal; text-align: left; max-width: 100%; }
+
+.sm-detail { padding: 16px; border-radius: var(--r-field); background: var(--bg-pop); }
+.sm-detail h3 { margin: 0; font-size: 16px; }
+.sm-detail .card-head { margin-bottom: 6px; flex-wrap: nowrap; align-items: flex-start; }
+.sm-detail .card-head > div { min-width: 0; }
+.sm-detail .icon-button { flex: none; }
+.sm-detail p { margin: 0 0 8px; }
+.sm-badge { gap: 4px; padding: 2px 9px 2px 5px; }
+.sm-badge.is-bad { background: var(--bad-soft); color: var(--error); }
+.sm-badge.is-warn { background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); }
+.sm-recent { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+.sm-recent li { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) auto; gap: 10px; align-items: baseline; }
+.sm-recent time, .sm-log time { color: var(--text-muted); font-size: 13px; }
+
+.sm-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--text-muted); }
+.sm-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.sm-legend-count { font-size: 15px; font-weight: 600; color: var(--text); }
+.sm-zones .small-head { margin-top: 4px; }
+
+.sm-log h3 { margin: 0 0 4px; font-size: 15px; }
+.sm-log > p { margin: 0 0 8px; }
+.sm-log ol { list-style: none; margin: 0; padding: 0; max-height: 640px; overflow-y: auto; }
+.sm-log li + li { border-top: 1px solid var(--border); }
+.sm-log-item { display: grid; grid-template-columns: 6.5em minmax(0, 1fr); gap: 4px 10px; width: 100%; padding: 9px 8px; font: inherit; font-size: 14px; text-align: left; color: var(--text); background: transparent; border: 0; border-radius: var(--r-tile); cursor: pointer; transition: background var(--dur-hover) var(--ease-out); }
+.sm-log-item:hover { background: var(--bg-pop); }
+.sm-log-item .badge { grid-column: 2; width: fit-content; }
+
+@media (max-width: 1100px) {
+  .sm-replay { grid-template-columns: minmax(0, 1fr); }
+  .sm-log ol { max-height: 360px; }
+}
+@media (max-width: 760px) {
+  /* The plan scales down to the phone's width, so its words get bigger in plan units and normal-state labels drop out;
+     the areas table below says everything the plan does. */
+  .sm-canvas { padding: 4px; border-radius: var(--r-field); }
+  .sm-zone-name { font-size: 24px; }
+  .sm-count { font-size: 44px; }
+  .sm-count-unit, .sm-uncounted { display: none; }
+  .sm-label { font-size: 22px; stroke-width: 6px; }
+  .sm-label.is-plain { display: none; }
+  .sm-time { margin-left: 0; flex-basis: 100%; }
+}

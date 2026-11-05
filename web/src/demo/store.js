@@ -20,6 +20,7 @@ const fresh = () => ({
   docs: {}, // documents: review decisions keyed by document id
   packs: [], // audit packs built
   tv: { announcement: "", screens: null }, // floor screen settings
+  commuteOptOut: {}, // route alerts: personId -> true (turned off) or false (turned back on), over the seeded consent (weather.js)
 });
 
 function load() {

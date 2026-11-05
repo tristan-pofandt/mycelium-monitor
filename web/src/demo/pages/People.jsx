@@ -1,6 +1,6 @@
 // People: the team map (Mycelium's live map in its "Team" lens: a radial tree from the viewer outwards, coloured by workload),
 // the same tree as an outline for keyboards and screen readers, and a searchable directory. Drag a task onto a person on the
-// map, or pick a person and use Assign, to hand out work.
+// map, or pick a person and use Assign, to hand out work. The Skills view shows who holds which machine ticket (skills.jsx).
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Table } from "../../charts.jsx";
 import { useReducedMotion } from "../../reduced.js";
@@ -9,6 +9,7 @@ import { rovingKeys, useToast } from "../../ui.jsx";
 import { PEOPLE, SITES, person, reportsOf, siteName } from "../data.js";
 import { PersonButton, PersonCard, SourceNote, useTasks } from "../bits.jsx";
 import { update, useCan, usePersona } from "../store.js";
+import { SkillsMatrix } from "../skills.jsx";
 
 const load = (p) => (p.tasks > 10 ? "high" : p.tasks > 7 ? "medium" : "ok");
 const LOAD_WORD = { high: "overloaded", medium: "busy", ok: "fine" };
@@ -166,15 +167,26 @@ export default function People() {
     toast({ title: `Assigned "${t?.title}" to ${person(to).name}.`, tone: "good" });
     setSelected(to);
   };
+  const views = (
+    <div role="group" aria-label="View" className="segmented" onKeyDown={(e) => rovingKeys(e, "button")}>
+      {[["map", "Map"], ["outline", "Outline"], ["skills", "Skills"]].map(([v, label]) => <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)}>{label}</button>)}
+    </div>
+  );
   return (
     <>
+      {view === "skills" ? (
+        <section className="panel-card span-2">
+          <div className="card-head">
+            <div><h2>Skills</h2><p className="card-sub">Who is certified to run each machine, when tickets run out, and which shifts are left short</p></div>
+            {views}
+          </div>
+          <SkillsMatrix persona={persona} />
+        </section>
+      ) : (
       <section className="panel-card span-2">
         <div className="card-head">
           <div><h2>Team map</h2><p className="card-sub">Who reports to whom, coloured by workload: <span className="dot dot-ok" /> fine <span className="dot dot-medium" /> busy <span className="dot dot-high" /> overloaded</p></div>
-          <div role="group" aria-label="View" className="segmented" onKeyDown={(e) => rovingKeys(e, "button")}>
-            <button type="button" aria-pressed={view === "map"} onClick={() => setView("map")}>Map</button>
-            <button type="button" aria-pressed={view === "outline"} onClick={() => setView("outline")}>Outline</button>
-          </div>
+          {views}
         </div>
         {view === "map" ? (
           <>
@@ -198,6 +210,7 @@ export default function People() {
         )}
         <SourceNote ids={["sso", "hr", "tasks"]} />
       </section>
+      )}
       <section className="panel-card"><PersonCard id={selected} /></section>
       <Directory people={scoped} />
     </>

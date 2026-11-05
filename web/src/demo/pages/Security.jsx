@@ -10,6 +10,11 @@ import { CAMERAS, DOOR_EVENTS, INSPECTIONS, POLICIES, VISITORS, dayOffset, fmtAg
 import { AlertsList, SourceNote, useAlerts } from "../bits.jsx";
 import { update, useCan, useDemo, usePersona } from "../store.js";
 import Cyber from "./Devices.jsx";
+import { PermitsCard } from "../permits.jsx";
+import { mergePermits, permitFor } from "../permits.js";
+
+// The permit column: Valid, None or Expired at restricted doors, a dash elsewhere. Words, not only colour.
+const PERMIT = { valid: ["Valid", "badge-ok"], none: ["None", "badge-bad"], expired: ["Expired", "badge-warn"] };
 
 function Physical() {
   const p = usePersona();
@@ -18,12 +23,15 @@ function Physical() {
   const mine = (x) => !site || x.site === site;
   const alerts = useAlerts().filter((a) => !a.done);
   const done = useDemo((s) => s.inspections);
+  const { permits: issued, permitEdits } = useDemo();
+  const permits = mergePermits(issued, permitEdits);
   const toast = useToast();
   const [doorSite, setDoorSite] = useState("all");
   const [allDoors, setAllDoors] = useState(false);
   const inspections = INSPECTIONS.filter(mine).map((i) => ({ ...i, doneAt: done[i.id] }));
   const overdue = inspections.filter((i) => !i.doneAt && i.due < dayOffset(0));
-  const doors = DOOR_EVENTS.filter(mine).filter((d) => doorSite === "all" || d.site === doorSite);
+  const doors = DOOR_EVENTS.filter(mine).filter((d) => doorSite === "all" || d.site === doorSite).sort((a, b) => b.when - a.when);
+  const LATEST = 12;
   return (
     <>
       <dl className="kpis">
@@ -37,6 +45,7 @@ function Physical() {
         <div className="card-head"><div><h2>Alerts</h2><p className="card-sub">Problems that only show up when systems are joined, such as HR leavers against active cards</p></div></div>
         <AlertsList />
       </section>
+      <PermitsCard />
       <section className="panel-card">
         <h2>Inspections</h2>
         <p className="muted small">Done on a phone at the door, with a photo. Overdue ones alert the site.</p>
@@ -65,12 +74,16 @@ function Physical() {
           {!site && <select className="input" aria-label="Site" value={doorSite} onChange={(e) => setDoorSite(e.target.value)}>
             <option value="all">All sites</option>{[...new Set(DOOR_EVENTS.map((d) => d.site))].map((s) => <option key={s} value={s}>{siteName(s)}</option>)}</select>}
         </div>
-        <Table caption="Door activity" head={["When", "Site", "Door", "Person", "Card", "Result"]}
-          keys={doors.slice(0, allDoors ? 99 : 8).map((d) => [-d.when.getTime()])}
-          rows={doors.slice(0, allDoors ? 99 : 8).map((d) => [fmtAgo(d.when), siteName(d.site), d.door, d.who, d.card,
-            <span key="r" className={d.result === "Granted" ? "" : "late"}>{d.result}</span>])} />
-        {!allDoors && doors.length > 8 && <div className="table-more"><span className="muted small">The latest 8 of {doors.length} card reads.</span><button type="button" className="button" onClick={() => setAllDoors(true)}>Show all</button></div>}
-        <SourceNote ids={["access_control"]} />
+        <Table caption="Door activity" head={["When", "Site", "Door", "Person", "Card", "Result", "Permit"]}
+          keys={doors.slice(0, allDoors ? 99 : LATEST).map((d) => [-d.when.getTime(), undefined, undefined, undefined, undefined, d.result, permitFor(d, d.card, d.when, permits) || ""])}
+          rows={doors.slice(0, allDoors ? 99 : LATEST).map((d) => {
+            const pm = PERMIT[permitFor(d, d.card, d.when, permits)];
+            return [fmtAgo(d.when), siteName(d.site), d.door, d.who, d.card, <span key="r" className={d.result === "Granted" ? "" : "late"}>{d.result}</span>,
+              pm ? <span key="p" className={`badge ${pm[1]} permit-cell`}>{pm[0]}</span> : <span key="p" className="muted"><span aria-hidden="true">—</span><span className="sr-only">Not a restricted door</span></span>];
+          })} />
+        {!allDoors && doors.length > LATEST && <div className="table-more"><span className="muted small">The latest {LATEST} of {doors.length} card reads.</span><button type="button" className="button" onClick={() => setAllDoors(true)}>Show all</button></div>}
+        <p className="muted small">The permit column checks restricted doors (an isolation cage, a hot-work bay, a confined space) against permits to work. Other doors show a dash.</p>
+        <SourceNote ids={["access_control", "permits"]} />
       </section>
       <section className="panel-card">
         <h2>Cameras</h2>

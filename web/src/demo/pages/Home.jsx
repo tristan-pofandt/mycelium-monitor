@@ -3,8 +3,10 @@ import { Link, useNavigate } from "react-router";
 import { CountUp, KpiTile } from "../../charts.jsx";
 import { Icon } from "../../icons.jsx";
 import { CAMERAS, DEVICES, EVENTS, INSPECTIONS, LEAVERS, OUTPUT, SIGNIN_ALERTS, SITES, TICKETS, VISITORS, dayOffset, fmtDay, person, siteName, under, WEEK_START } from "../data.js";
+import { useLiveSites } from "../roster.js";
 import { ApprovalsList, AlertsList, RoundLink, SourceNote, TaskRow, useAlerts, useApprovals, useTasks } from "../bits.jsx";
 import { Assumed } from "../feedback.jsx";
+import { WeatherCard } from "../weather.jsx";
 import { update, useDemo, usePersona } from "../store.js";
 
 const updatedAt = new Date(Date.now() - 3 * 60e3).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -59,12 +61,13 @@ function TodayEvents({ site, shift }) {
 }
 
 function SitesGlance() {
+  const live = useLiveSites();
   return (
     <div className="table-wrap">
       <table className="table">
         <caption className="sr-only">Sites at a glance</caption>
         <thead><tr><th scope="col">Site</th><th scope="col">OEE</th><th scope="col">Overdue work orders</th><th scope="col">Roster coverage</th><th scope="col">Incidents (30 d)</th></tr></thead>
-        <tbody>{SITES.map((s) => (
+        <tbody>{live.map((s) => (
           <tr key={s.id}>
             <th scope="row"><Link to={`/sites?site=${s.id}`}>{s.name}</Link></th>
             <td className={s.kpi.oee < 75 ? "late" : ""}>{s.kpi.oee}%</td>
@@ -111,7 +114,7 @@ function GmHome() {
   const alerts = useAlerts().filter((a) => !a.done);
   return (
     <>
-      <Greeting bad line="2 sites need you today: Ipswich has 23 overdue work orders, and Toowoomba's roster is 86% covered for next week." />
+      <Greeting bad line={`2 sites need you today: Ipswich has 23 overdue work orders, and Toowoomba's roster is ${useLiveSites().find((s) => s.id === "twb").kpi.coverage}% covered for the next 7 days.`} />
       <StartStrip />
       <dl className="kpis">
         <KpiTile icon="usage" label="Units built yesterday, all sites" value={<CountUp value={SITES.reduce((n, s) => n + yesterday(s.id), 0)} format={(v) => v.toLocaleString()} />} to="/sites" linkLabel="Open sites" />
@@ -123,13 +126,14 @@ function GmHome() {
       <Card title="Waiting for your approval" to="/work" label="Open approvals" className="approvals-card"><ApprovalsList limit={3} compact /></Card>
       <Card title="Security" sub={`${alerts.length} open alerts across all sites`} to="/security" label="Open security"><AlertsList limit={3} /></Card>
       <Card title="Today" to="/calendar" label="Open calendar"><TodayEvents /></Card>
+      <WeatherCard />
       <Card title="Sites at a glance" sub="Worst figures flagged" to="/sites" label="Open sites" className="span-2"><SitesGlance /></Card>
     </>
   );
 }
 
 function SiteHome({ site }) {
-  const s = SITES.find((x) => x.id === site);
+  const s = useLiveSites().find((x) => x.id === site);
   const tasks = useTasks().filter((t) => t.status !== "done").slice(0, 5);
   return (
     <>
@@ -138,12 +142,13 @@ function SiteHome({ site }) {
         <KpiTile icon="usage" label="Units built yesterday" value={<CountUp value={yesterday(site)} />} to="/sites" linkLabel="Open site" />
         <KpiTile icon="status" label="OEE this week" value={<CountUp value={s.kpi.oee} format={(v) => `${v}%`} />} to="/sites" linkLabel="Open site" />
         <KpiTile icon="latency" label="Unplanned downtime, 7 days" value={<CountUp value={s.kpi.downtime} format={(v) => `${v} h`} />} to="/sites" linkLabel="Open site" />
-        <KpiTile icon="check" label="Roster coverage next week" value={<CountUp value={s.kpi.coverage} format={(v) => `${v}%`} />} to="/calendar" linkLabel="Open calendar" />
+        <KpiTile icon="check" label="Roster coverage, next 7 days" value={<CountUp value={s.kpi.coverage} format={(v) => `${v}%`} />} to="/rosters" linkLabel="Open rosters" />
       </dl>
       <Card title="Waiting for your approval" to="/work" label="Open approvals" className="approvals-card"><ApprovalsList limit={3} compact /></Card>
       <Card title="Open tasks at your site" to="/work" label="Open work"><ul className="tasks" role="list">{tasks.map((t) => <TaskRow key={t.id} t={t} />)}</ul></Card>
       <Card title="Security at your site" to="/security" label="Open security"><AlertsList limit={3} /></Card>
       <Card title="Today" to="/calendar" label="Open calendar"><TodayEvents site={site} /></Card>
+      <WeatherCard />
     </>
   );
 }
@@ -162,6 +167,7 @@ function SupervisorHome({ me }) {
         <SourceNote ids={["hr"]} />
       </Card>
       <Card title="Today" to="/calendar" label="Open calendar"><TodayEvents site={me.site} shift={me.shift} /></Card>
+      <WeatherCard />
     </>
   );
 }
@@ -190,6 +196,7 @@ function EmployeeHome({ me }) {
           : <p className="muted">No open requests. Leave and shift swaps you ask for appear here with their approval status. <Link to="/work">Make a request</Link></p>}
       </Card>
       <Card title="Today" to="/calendar" label="Open calendar"><TodayEvents site={me.site} shift={me.shift} /></Card>
+      <WeatherCard />
     </>
   );
 }
@@ -205,6 +212,7 @@ function SecurityHome() {
         <KpiTile icon="status" label="Cameras offline" value={String(CAMERAS.reduce((n, c) => n + c.offline.length, 0))} to="/security" linkLabel="Open security" />
       </dl>
       <Card title="Alerts" to="/security" label="Open security" className="span-2"><AlertsList /></Card>
+      <WeatherCard />
     </>
   );
 }
@@ -227,6 +235,7 @@ function ItHome() {
         <p>Due {fmtDay(dayOffset(12))}. Each manager confirms their team's roles in a few clicks; you see who hasn't.</p>
         <Link to="/roles" className="button">Open roles and permissions</Link>
       </Card>
+      <WeatherCard />
     </>
   );
 }

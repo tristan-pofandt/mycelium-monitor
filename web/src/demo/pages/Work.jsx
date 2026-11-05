@@ -6,6 +6,7 @@ import { SITES, TICKETS, dayOffset, fmtDay, inScope, person } from "../data.js";
 import { ApprovalsList, PersonSearch, SourceNote, TaskRow, isLate, useApprovals, useTasks } from "../bits.jsx";
 import { SystemName } from "../feedback.jsx";
 import { update, useCan, usePersona } from "../store.js";
+import { PermitsCard } from "../permits.jsx";
 
 function NewTask() {
   const p = usePersona();
@@ -80,6 +81,7 @@ export default function Work() {
         </div>
         <SourceNote ids={["tasks", "maintenance", "itsm", "whs"]} />
       </section>
+      {can("permits") && <PermitsCard />}
       {can("assign") && <section className="panel-card"><h2>Hand out a task</h2><NewTask /></section>}
       <section className="panel-card">
         <h2>My requests</h2>

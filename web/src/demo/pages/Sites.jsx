@@ -2,8 +2,11 @@
 import { useSearchParams } from "react-router";
 import { Bars, KpiTile } from "../../charts.jsx";
 import { rovingKeys } from "../../ui.jsx";
-import { ENTITIES, OUTPUT, PEOPLE, SITES, person } from "../data.js";
+import { ENTITIES, OUTPUT, PEOPLE, PLACES, SITES, person, siteName } from "../data.js";
+import { useLiveSites, useRosterCoverage } from "../roster.js";
+import { WeatherLine } from "../weather.jsx";
 import { SourceNote } from "../bits.jsx";
+import { SiteMapReplay } from "../sitemap.jsx";
 import { usePersona } from "../store.js";
 
 const COLS = [
@@ -15,6 +18,7 @@ const COLS = [
 const short = (d) => d.toLocaleDateString([], { day: "numeric", month: "short" });
 
 function Comparison() {
+  const live = useLiveSites();
   return (
     <>
       <section className="panel-card">
@@ -23,7 +27,7 @@ function Comparison() {
           <table className="table">
             <caption className="sr-only">Site comparison</caption>
             <thead><tr><th scope="col">Site</th>{COLS.map(([k, label]) => <th key={k} scope="col">{label}</th>)}</tr></thead>
-            <tbody>{SITES.map((s) => (
+            <tbody>{live.map((s) => (
               <tr key={s.id}>
                 <th scope="row">{s.name}<span className="muted small block">{s.kind} · {s.staff} staff</span></th>
                 {COLS.map(([k, , unit, , bad]) => <td key={k} className={bad(s.kpi[k]) ? "late" : ""}>{s.kpi[k]}{unit}{bad(s.kpi[k]) && <span className="sr-only"> (flagged)</span>}</td>)}
@@ -52,17 +56,42 @@ function Comparison() {
   );
 }
 
-function Detail({ id }) {
-  const s = SITES.find((x) => x.id === id);
+const VIEWS = [{ id: "map", label: "Map" }, { id: "figures", label: "Figures" }];
+
+function MapCard({ id, focus }) {
+  return (
+    <section className="panel-card">
+      <div className="card-head"><div><h2>{siteName(id)} site map</h2>
+        <p className="card-sub">Doors, cameras, alarms and machines as they are now, with people per area counted from card reads in and out. Replay the last 24 hours below.</p></div></div>
+      <SiteMapReplay site={id} focus={focus} />
+      <SourceNote ids={["floorplans", "access_control", "cctv", "alarms", "plantdata"]} />
+    </section>
+  );
+}
+
+function Detail({ id, view, setView, focus }) {
+  const live = useLiveSites();
+  const cov = useRosterCoverage(id);
+  const s = live.find((x) => x.id === id);
+  const toggle = (
+    <div className="toolbar" style={{ gridColumn: "1 / -1" }}>
+      <div role="group" aria-label="Site view" className="segmented" onKeyDown={(e) => rovingKeys(e, "button")}>
+        {VIEWS.map((v) => <button key={v.id} type="button" aria-pressed={view === v.id} onClick={() => setView(v.id)}>{v.label}</button>)}
+      </div>
+    </div>
+  );
+  if (!s) return <MapCard id={id} focus={focus} />; // the Brisbane office: a plan, no plant figures
+  if (view === "map") return <>{toggle}<MapCard id={id} focus={focus} /></>;
   const days = OUTPUT.find((o) => o.site === id).days;
   const issues = [
     s.kpi.overdue > 15 && `${s.kpi.overdue} maintenance work orders are overdue; 6 are on press line 2.`,
-    s.kpi.coverage < 90 && `Next week's night shifts are short by 9 people.`,
+    s.kpi.coverage < 90 && `${cov.short.reduce((n, c) => n + c.need - c.have, 0)} shifts in the next 7 days have nobody rostered yet.`,
     s.kpi.oee < 75 && `OEE is ${s.kpi.oee}%, below the 75% target, mostly from unplanned downtime.`,
     s.kpi.quality > 5 && `${s.kpi.quality} quality issues are open, the oldest 19 days.`,
   ].filter(Boolean);
   return (
     <>
+      {toggle}
       <dl className="kpis">
         {COLS.slice(0, 4).map(([k, label, unit], i) => <KpiTile key={k} icon={["status", "latency", "errors", "spark"][i]} label={label} value={`${s.kpi[k]}${unit}`} />)}
         {COLS.slice(4).map(([k, label, unit], i) => <KpiTile key={k} icon={["settings", "ledger", "check", "clock"][i]} label={label} value={`${s.kpi[k]}${unit}`} />)}
@@ -78,6 +107,7 @@ function Detail({ id }) {
         {issues.length ? <ul className="queue" role="list">{issues.map((t) => <li key={t} className="queue-item"><p>{t}</p></li>)}</ul> : <p className="muted">Nothing past its threshold.</p>}
         <SourceNote ids={["maintenance", "rostering", "quality"]} />
       </section>
+      <WeatherLine site={id} />
     </>
   );
 }
@@ -86,20 +116,25 @@ export default function Sites() {
   const p = usePersona();
   const [params, setParams] = useSearchParams();
   const own = p.id === "site_manager" ? person(p.person).site : null;
-  const site = own || params.get("site") || "all";
+  const asked = params.get("site");
+  const site = own || (PLACES.some((s) => s.id === asked) ? asked : "all");
+  // ?view=map&focus=<object id>: Security's "Show on map" links here (plans.js mapHref). The Site Manager starts on the map.
+  const view = VIEWS.some((v) => v.id === params.get("view")) ? params.get("view") : own ? "map" : "figures";
+  const focus = params.get("focus")?.startsWith(`${site}-`) ? params.get("focus") : null;
+  const setView = (v) => setParams(own ? { view: v } : { site, view: v });
   return (
     <>
       {!own && (
         <div className="toolbar" style={{ gridColumn: "1 / -1" }}>
           <div role="group" aria-label="Site" className="segmented" onKeyDown={(e) => rovingKeys(e, "button")}>
-            {[{ id: "all", name: "All sites" }, ...SITES].map((s) => (
-              <button key={s.id} type="button" aria-pressed={site === s.id} onClick={() => setParams(s.id === "all" ? {} : { site: s.id })}>{s.name}</button>
+            {[{ id: "all", name: "All sites" }, ...PLACES].map((s) => (
+              <button key={s.id} type="button" aria-pressed={site === s.id} onClick={() => setParams(s.id === "all" ? {} : { site: s.id, ...(params.get("view") ? { view } : {}) })}>{s.name}</button>
             ))}
           </div>
         </div>
       )}
       {own && <p className="notice">As Site Manager you see {SITES.find((s) => s.id === own).name} only. The GM sees every site side by side.</p>}
-      {site === "all" ? <Comparison /> : <Detail id={site} />}
+      {site === "all" ? <Comparison /> : <Detail id={site} view={view} setView={setView} focus={focus} />}
     </>
   );
 }

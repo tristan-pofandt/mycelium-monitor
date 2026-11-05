@@ -4,8 +4,10 @@
 import { useState } from "react";
 import { Icon } from "../../icons.jsx";
 import { Switch, useToast } from "../../ui.jsx";
-import { ENTITIES, PEOPLE, SITES } from "../data.js";
+import { ENTITIES, PEOPLE, PLACES, SITES } from "../data.js";
 import { Assumed, openFeedback } from "../feedback.jsx";
+import { PLANS } from "../plans.js";
+import { SiteMap } from "../sitemap.jsx";
 
 const SIZES = [
   { id: "small", label: "Just me or a small team", sub: "Under 20 people, one place" },
@@ -27,6 +29,39 @@ function Choice({ value, options, onChange, name }) {
   );
 }
 
+// Floor plans: upload a PDF per site, then place the doors the access system lists. Simulated: the file never leaves the
+// browser (only its name is shown), and "placing" a door uses the spot already drawn in plans.js.
+function FloorPlans() {
+  const toast = useToast();
+  const [site, setSite] = useState(SITES[0].id);
+  const [files, setFiles] = useState({});
+  const [placed, setPlaced] = useState({});
+  const plan = PLANS[site];
+  const done = plan.doors.every((d) => placed[d.id]);
+  const got = (name) => { setFiles({ ...files, [site]: name }); toast({ title: `Traced ${plan.zones.length} areas from ${name} (simulated). The file stays in this browser.`, tone: "good" }); };
+  return (
+    <>
+      <p>The site map needs a simple plan of each site: its areas, and where the doors, cameras and alarms are. We guess there are no plans in a system: <Assumed id="floorplans" /></p>
+      <div className="form-row">
+        <label className="field"><span>Site</span>
+          <select className="input" value={site} onChange={(e) => setSite(e.target.value)}>{PLACES.map((s) => <option key={s.id} value={s.id}>{s.name}{files[s.id] ? " (plan added)" : ""}</option>)}</select></label>
+        <label className="field"><span>Floor plan (PDF)</span>
+          <input type="file" accept="application/pdf" className="input" onChange={(e) => { const f = e.target.files?.[0]; if (f) got(f.name); }} /></label>
+      </div>
+      {!files[site] && <p className="small"><button type="button" className="link" onClick={() => got(`${plan.name} plan (sample).pdf`)}>No PDF to hand? Use a sample plan</button></p>}
+      {files[site] && <>
+        <h3>Place the doors</h3>
+        <p className="muted small">{plan.doors.length} doors came from <Assumed id="access_control" />. In a real setup you drag each onto the plan; here, tick it to place it at the spot we suggest.</p>
+        <ul className="connect" role="list">{plan.doors.map((d) => (
+          <li key={d.id}><span>{d.name}</span>
+            <label className="check"><input type="checkbox" checked={!!placed[d.id]} onChange={(e) => setPlaced({ ...placed, [d.id]: e.target.checked })} /> Placed</label></li>))}</ul>
+        {!done && <div className="actions"><button type="button" className="button" onClick={() => setPlaced({ ...placed, ...Object.fromEntries(plan.doors.map((d) => [d.id, true])) })}>Place all at the suggested spots</button></div>}
+        {done && <><p>All doors placed. This is the plan the Sites page will show:</p><SiteMap site={site} compact /></>}
+      </>}
+    </>
+  );
+}
+
 export default function Setup() {
   const toast = useToast();
   const [size, setSize] = useState("large");
@@ -40,7 +75,7 @@ export default function Setup() {
 
   const large = size !== "small";
   const steps = large
-    ? ["Size", "Sign-in and directory", "Confirm your structure", "Policies", "Connect systems", "Review"]
+    ? ["Size", "Sign-in and directory", "Confirm your structure", "Policies", "Connect systems", "Floor plans", "Review"]
     : ["Size", "About your business", "Connect accounts", "Review"];
   const total = SYSTEM_STEPS.length * (size === "large" ? SITES.length : 1);
   const done = Object.values(connected).filter(Boolean).length + Object.values(delegated).filter(Boolean).length * SYSTEM_STEPS.length;
@@ -100,6 +135,7 @@ export default function Setup() {
         })}</ul>
       </>}
     </>,
+    "Floor plans": <FloorPlans />,
     "Review": <>
       <p className="setup-score"><strong>{large ? score : Math.min(100, 40 + Object.values(connected).filter(Boolean).length * 20)}%</strong> of the picture is set up.</p>
       <p>What each missing piece would add:</p>

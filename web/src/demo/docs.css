@@ -1,0 +1,66 @@
+/* Documents and tax (pages/Documents.jsx, docs.jsx). Tokens only; nothing here animates. */
+
+/* Review: the queue, the document as it arrived, and the fields read from it */
+.doc-review-card { grid-column: 1 / -1; }
+.doc-review { display: grid; gap: 20px; grid-template-columns: minmax(190px, 230px) minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; }
+@media (max-width: 1180px) { .doc-review { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .doc-queue { grid-column: 1 / -1; } }
+@media (max-width: 760px) { .doc-review { grid-template-columns: minmax(0, 1fr); } }
+
+.doc-queue ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+@media (max-width: 1180px) { .doc-queue ol { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
+.doc-queue button { width: 100%; display: grid; gap: 4px; justify-items: start; text-align: left; font: inherit; font-size: 14px; color: var(--text);
+  background: transparent; border: 1px solid var(--border); border-radius: var(--r-tile); padding: 10px 12px; cursor: pointer;
+  transition: background var(--dur-hover) var(--ease-out); }
+.doc-queue button:hover { background: var(--bg-pop); }
+.doc-queue button[aria-current="true"] { background: var(--bg-pop); border-color: var(--border-strong); box-shadow: inset 3px 0 0 var(--accent); }
+.doc-queue .badge, .doc-result .badge { font-size: 12px; }
+.doc-q-file { font-weight: 500; overflow-wrap: anywhere; }
+.doc-queue .small { margin: 0; }
+
+/* The tray the document sits on, and the fictional document itself */
+.doc-tray { background: var(--bg-pop); border-radius: var(--r-tile); padding: 14px; min-width: 0; }
+.doc-from { margin: 0 0 10px; }
+.doc-paper { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-field); box-shadow: var(--shadow-card); padding: 22px;
+  font-size: 13px; line-height: 1.45; font-variant-numeric: tabular-nums; min-width: 0; overflow-wrap: anywhere; }
+.doc-paper p { margin: 0; }
+.doc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 2px solid var(--text); }
+.doc-supplier { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.doc-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); text-align: right; }
+.doc-faint { color: var(--text-muted); font-size: 12px; margin-top: 10px !important; }
+.doc-top .doc-faint { margin-top: 2px !important; }
+.doc-meta { display: grid; grid-template-columns: max-content 1fr; gap: 3px 14px; margin: 0 0 14px; }
+.doc-meta dt { color: var(--text-muted); }
+.doc-meta dd { margin: 0; }
+.doc-lines { width: 100%; border-collapse: collapse; }
+.doc-lines th { font-weight: 500; color: var(--text-muted); text-align: left; padding: 4px 0; border-bottom: 1px solid var(--border); }
+.doc-lines td { padding: 5px 0; border-bottom: 1px solid var(--border); vertical-align: top; }
+.doc-lines .num { text-align: right; padding-left: 12px; white-space: nowrap; }
+.doc-lines tfoot td { border-bottom: 0; padding: 3px 0; }
+.doc-lines tfoot tr:first-child td { padding-top: 8px; }
+.doc-total td { font-weight: 600; font-size: 14px; border-top: 1px solid var(--border-strong) !important; padding-top: 6px !important; }
+.doc-gap td { color: var(--text-muted); font-style: italic; }
+.doc-note { margin-top: 12px !important; padding: 8px 10px; border: 1px dashed var(--border-strong); border-radius: var(--r-tag); font-weight: 500; }
+
+/* The fields read from it */
+.doc-fields { display: grid; gap: 12px; min-width: 0; }
+.doc-why { padding: 12px 14px; border-radius: var(--r-field); background: var(--bg-pop); border-left: 3px solid var(--warning); font-size: 14px; }
+.doc-why.is-flagged { border-left-color: var(--error); }
+.doc-why p { margin: 0 0 6px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.doc-why ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.doc-field-list { list-style: none; margin: 0; padding: 0; }
+.doc-field-list li { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; flex-wrap: wrap; padding: 9px 0; border-top: 1px solid var(--border); }
+.doc-field-list li:first-child { border-top: 0; }
+.doc-field-main { display: grid; gap: 2px; min-width: 0; flex: 1 1 180px; }
+.doc-field-main .input { max-width: 280px; }
+.doc-field-label { font-size: 12px; color: var(--text-muted); }
+.doc-field-value { font-size: 14px; overflow-wrap: anywhere; }
+.doc-field-side { display: flex; align-items: center; gap: 10px; }
+.doc-field-side .link { word-break: normal; white-space: nowrap; margin: 0; }
+.doc-fields .actions { margin-top: 0; }
+
+/* Inbox and Watched folders */
+.doc-result { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.doc-result .link { word-break: normal; margin: 0; }
+.doc-rules { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 10px; font-size: 14px; }
+.doc-rules .badge { margin-right: 6px; }
+.doc-promises { margin: 12px 0 0; padding-left: 18px; display: grid; gap: 6px; }

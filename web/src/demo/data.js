@@ -381,3 +381,16 @@ for (const p of PEOPLE) {
 
 // Is this person certified for this cert on this day (not in training, not expired)?
 export const qualified = (p, cert, at = TODAY) => (p.skills || []).some((s) => s.cert === cert && s.status === "certified" && (!s.expires || s.expires >= at));
+
+// ── Restricted doors for permits to work (feature 3; permits live in permits.js) ──
+// Added after the door events were generated, so the seeded reads keep their doors. No rand() calls here.
+DOORS.ips.push("Press line 2 isolation cage"); DOORS.twb.push("Foundry hot-work bay"); DOORS.acr.push("Tank 2 confined space");
+export { DOORS };
+{
+  const read = (id, h, site, door, p) => DOOR_EVENTS.push({ id, when: hoursAgo(h), site, door, who: p.name, card: p.card, result: "Granted" });
+  const first = (site, title, cert) => PEOPLE.find((p) => p.site === site && p.title === title && p.status === "active" && qualified(p, cert));
+  read("dp1", 0.4, "ips", "Press line 2 isolation cage", first("ips", "Maintenance fitter", "isolation")); // on a valid permit
+  read("dp2", 1.1, "acr", "Tank 2 confined space", PEOPLE.find((p) => p.card === "C-10577")); // no permit, no ticket
+  read("dp3", 1.6, "twb", "Foundry hot-work bay", first("twb", "Foundry operator", "hotwork")); // their permit ended yesterday
+  SECURITY_ALERTS.splice(2, 0, { id: "s7", sev: "high", title: "Card C-10577 entered Tank 2 (confined space) with no permit to work", site: "acr", when: hoursAgo(1.1), source: "permits" });
+}

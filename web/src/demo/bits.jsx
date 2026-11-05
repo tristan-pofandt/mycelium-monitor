@@ -2,12 +2,13 @@
 import { Fragment, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router";
-import { APPROVALS, PEOPLE, SECURITY_ALERTS, TASKS, dayOffset, fmtAgo, fmtDay, person, siteName, under, inScope } from "./data.js";
+import { APPROVALS, MACHINES, PEOPLE, SECURITY_ALERTS, TASKS, certName, dayOffset, fmtAgo, fmtDay, person, qualified, siteName, under, inScope } from "./data.js";
 import { SourceNote } from "./feedback.jsx";
 export { SourceNote };
 import { audit, update, useCan, useDemo, usePersona } from "./store.js";
 import { Icon } from "../icons.jsx";
 import { EmptyState, HoldButton, Tip, useToast } from "../ui.jsx";
+import { PermitBadge } from "./permits.jsx"; // permits.jsx uses PersonSearch from here: a cycle that's safe because both only run at render
 
 export const SEV = { high: "badge-bad", medium: "badge-warn", low: "badge-none" };
 export const Sev = ({ sev }) => <span className={`badge ${SEV[sev]}`}>{sev === "high" ? "High" : sev === "medium" ? "Medium" : "Low"}</span>;
@@ -124,7 +125,8 @@ export function useTasks(filter = "scope") {
   const { tasks, newTasks } = useDemo();
   const me = person(p.person);
   const scope = new Set(inScope(p).map((x) => x.id));
-  const all = [...TASKS, ...newTasks].map((t) => ({ ...t, ...tasks[t.id] }));
+  // due comes back from localStorage as a string for tasks handed out in the demo
+  const all = [...TASKS, ...newTasks].map((t) => ({ ...t, ...tasks[t.id], due: new Date(t.due) }));
   if (filter === "mine") return all.filter((t) => t.assignee === me.id);
   return all.filter((t) => scope.has(t.assignee) || t.assignee === me.id);
 }
@@ -139,6 +141,7 @@ export function TaskRow({ t }) {
         <span className={t.status === "done" ? "done-text" : ""}>{t.title}</span>
       </label>
       <span className="muted small">{person(t.assignee)?.name} · {siteName(t.site)} · <span className={isLate(t) ? "late" : ""}>{isLate(t) ? "overdue, was due" : "due"} {fmtDay(t.due)}</span></span>
+      <PermitBadge t={t} />
       <SourceNote ids={[t.source]} />
     </li>
   );
@@ -186,6 +189,7 @@ export function PersonCard({ id, onClose }) {
         <dt>Reports to</dt><dd>{person(p.manager)?.name || "Group (outside Queensland operations)"}</dd>
         <dt>Direct reports</dt><dd>{reports || "None"}</dd>
         <dt>Shift</dt><dd>{p.shift}</dd>
+        {MACHINES.some((m) => m.site === p.site) && <><dt>Can operate</dt><dd>{MACHINES.filter((m) => m.site === p.site && qualified(p, m.needs)).map((m) => m.name).join(", ") || "No machine tickets"}{p.skills?.some((s) => s.status === "training") && <span className="muted"> · in training for {p.skills.filter((s) => s.status === "training").map((s) => certName(s.cert).toLowerCase()).join(", ")}</span>}</dd></>}
         <dt>Open tasks</dt><dd>{p.tasks}</dd>
         <dt>Access card</dt><dd>{p.card} · {p.status === "left" ? <span className="late">still active after they left</span> : "active"}</dd>
         <dt>Pay rate</dt><dd>{can("pay") ? "$41.20 an hour (fictional)" : <span className="muted">Hidden for your role</span>}</dd>
